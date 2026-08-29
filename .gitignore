@@ -1,0 +1,65 @@
+### Java / Maven ###
+target/
+*.class
+*.jar
+*.war
+
+### Spring Boot ###
+HELP.md
+.mvn/wrapper/maven-wrapper.jar
+application-local.properties
+application-local.yml
+
+### Variables de entorno y secretos ###
+.env
+.env.*
+*.key
+*.pem
+
+### IDE ###
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+### Sistema operativo ###
+.DS_Store
+Thumbs.db
+
+### Logs ###
+*.log
+logs/### Java / Maven ###
+target/
+*.class
+*.jar
+*.war
+
+### Spring Boot ###
+HELP.md
+.mvn/wrapper/maven-wrapper.jar
+application-local.properties
+application-local.yml
+
+### Variables de entorno y secretos ###
+.env
+.env.*
+*.key
+*.pem
+
+### IDE ###
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+### Sistema operativo ###
+.DS_Store
+Thumbs.db
+
+### Logs ###
+*.log
+logs/
