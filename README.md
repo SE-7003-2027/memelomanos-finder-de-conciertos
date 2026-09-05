@@ -1,13 +1,13 @@
 # Finder de Conciertos
 
-Proyecto de la materia Ingeniería en Software - Team memelomanos, UNAM
+Proyecto de la materia Ingeniería en Software — Team 8 (memelomanos), UNAM
 
 Repositorio: https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos
 
 ## Equipo
 
 - Buendía Elizalde Ricardo
-- Ochoa Campos Ana Sofía
+- [Ochoa Campos Ana Sofía](https://github.com/soffochoa)
 - Ramírez Palacios Miguel
 - Tenorio Reyes Ihebel Luro
 - Sánchez Soto Saúl
@@ -29,7 +29,7 @@ avancemos, para que siempre refleje el estado real del proyecto.
 
 ## Stack
 
-- Backend: Java + Spring (Boot)
+- Backend: Java 21 + Spring (Boot), Maven
 - Base de datos: por definir
 - Frontend: por definir
 
@@ -40,8 +40,8 @@ herramientas, variables de entorno o pasos nuevos.
 
 ### Requisitos previos
 
-- Java <versión> (JDK)
-- Maven o Gradle <versión>
+- Java 21 (JDK)
+- Maven 3.9+ (o usar el wrapper `./mvnw` incluido en el proyecto)
 - Git
 - (agregar Docker, base de datos, etc. conforme se definan)
 
