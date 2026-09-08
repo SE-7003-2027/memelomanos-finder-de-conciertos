@@ -10,6 +10,3 @@ El equipo se compromete por ahora a desarrollar las siguientes funcionalidades b
 - Creación y consulta de un perfil de usuario.
 - Marcar conciertos de interés para el usuario.
 
-## Consideraciones
-
-Estas funcionalidades inicialmente utilizarán datos de prueba y no dependerán todavía de APIs o bases de datos externas. La integración con servicios externos podrá realizarse posteriormente conforme avance el desarrollo del proyecto.
