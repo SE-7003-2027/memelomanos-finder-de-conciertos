@@ -7,7 +7,7 @@ Repositorio: https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos
 ## Equipo
 
 - Ricardo Buendía
-- [Ana Sofía Ochoa](https://github.com/soffochoa)
+- [Sofía Ochoa](https://github.com/soffochoa)
 - Miguel Ramírez
 - Ihebel Tenorio
 - Saúl Sánchez
