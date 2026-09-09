@@ -7,7 +7,7 @@ Repositorio: https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos
 ## Equipo
 
 - Ricardo Buendía
-- [Sofía Ochoa](https://github.com/soffochoa)
+- [Ana Sofía Ochoa](https://github.com/soffochoa)
 - Miguel Ramírez
 - Ihebel Tenorio
 - Saúl Sánchez
@@ -23,15 +23,19 @@ avancemos, para que siempre refleje el estado real del proyecto.
 
 ### Features (en desarrollo)
 
-- [ ] Búsqueda de conciertos por artista, ciudad o fecha
-- [ ] Perfil de usuario
-- [ ] (agregar aquí más features conforme se definan)
+Funcionalidades comprometidas por el equipo para el sprint actual:
+
+- [ ] Búsqueda de conciertos por artista
+- [ ] Visualización de la información básica de un concierto (artista, fecha, ciudad o lugar)
+- [ ] Lista de conciertos disponibles
+- [ ] Creación y consulta de un perfil de usuario
+- [ ] Marcar conciertos de interés para el usuario
 
 ## Stack
 
-- Backend: Java 21 + Spring (Boot), Maven
+- Backend: Java 21 + Spring Boot (API), Maven
+- Interfaz: en evaluación — se está considerando Java Swing (ver ADR-002) para una app de escritorio que consuma la API
 - Base de datos: por definir
-- Frontend: por definir
 
 ## Cómo ejecutar el proyecto desde cero
 
