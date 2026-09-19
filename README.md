@@ -1,6 +1,6 @@
 # Finder de Conciertos
 
-Proyecto de la materia Ingeniería en Software — Team 8 (memelomanos), UNAM
+Proyecto de la materia Ingeniería en Software  Team 8 (memelomanos), UNAM
 
 Repositorio: https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos
 
@@ -35,7 +35,7 @@ Funcionalidades comprometidas por el equipo para el sprint actual:
 
 - Backend: Java 21 + Spring Boot (API), Maven
 - Interfaz: en evaluación — se está considerando Java Swing (ver ADR-002) para una app de escritorio que consuma la API
-- Base de datos: por definir
+- Base de datos: PostgreSQL
 
 ## Cómo ejecutar el proyecto desde cero
 
