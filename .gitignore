@@ -9,6 +9,7 @@ HELP.md
 .mvn/wrapper/maven-wrapper.jar
 application-local.properties
 application-local.yml
+src/main/resources/application.properties
 
 ### Variables de entorno y secretos ###
 .env
