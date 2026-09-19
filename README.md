@@ -45,9 +45,9 @@ herramientas, variables de entorno o pasos nuevos.
 ### Requisitos previos
 
 - Java 21 (JDK)
-- Maven 3.9+ (o usar el wrapper `./mvnw` incluido en el proyecto)
+- Maven 3.9+ 
 - Git
-- (agregar Docker, base de datos, etc. conforme se definan)
+- PostgreSQL 16+ 
 
 ### Pasos
 
@@ -56,19 +56,32 @@ herramientas, variables de entorno o pasos nuevos.
    git clone https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos.git
    cd memelomanos-finder-de-conciertos
    ```
-2. Configurar las variables de entorno (archivo `.env` o
-   `application.properties` local; ver `.env.example` cuando exista).
-3. Instalar dependencias:
+2. Copiar el archivo de configuración de ejemplo:
+
    ```bash
-   ./mvnw install
+   cp src/main/resources/application.properties.example \
+      src/main/resources/application.properties
    ```
-4. Levantar el proyecto:
+3. Configurar en `application.properties` los datos de conexión a PostgreSQL
+   (usuario, contraseña, host y puerto si es necesario).
+4. Compilar el proyecto:
    ```bash
-   ./mvnw spring-boot:run
+   mvn clean install
    ```
+5. Levantar el proyecto:
+   ```bash
+   mvn spring-boot:run
+   ```
+
+Si todo está configurado correctamente, el backend se levantará en el puerto
+`8080` y establecerá la conexión con PostgreSQL.
+
+Actualmente no hay endpoints disponibles, por lo que acceder 
+a la raíz de la aplicación puede responder con un error `404 Not Found`.
 
 ## Documentación adicional
 
 - Guía de estilo: `docs/guia-de-estilo.md`
 - Decisiones de arquitectura (ADRs): `docs/adr/`
 - Guía de contribución: `CONTRIBUTING.md`
+- Se puede consultar la Wiki del repositorio para más información.
