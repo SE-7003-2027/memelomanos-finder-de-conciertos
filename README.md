@@ -25,7 +25,7 @@ avancemos, para que siempre refleje el estado real del proyecto.
 
 Funcionalidades comprometidas por el equipo para el sprint actual:
 
-- [ ] Búsqueda de conciertos por artista
+- [x] Búsqueda de conciertos por artista
 - [ ] Visualización de la información básica de un concierto (artista, fecha, ciudad o lugar)
 - [ ] Lista de conciertos disponibles
 - [ ] Creación y consulta de un perfil de usuario
@@ -34,7 +34,7 @@ Funcionalidades comprometidas por el equipo para el sprint actual:
 ## Stack
 
 - Backend: Java 21 + Spring Boot (API), Maven
-- Interfaz: en evaluación — se está considerando Java Swing (ver ADR-002) para una app de escritorio que consuma la API
+- Interfaz: en evaluación — el equipo está comparando Java Swing (app de escritorio), Thymeleaf (renderizado en el servidor) y un frontend desacoplado (React/Vue/Angular) — ver ADR-002 para el detalle de cada opción
 - Base de datos: PostgreSQL
 
 # Cómo ejecutar el proyecto desde cero
@@ -106,9 +106,9 @@ Si estás tomando la materia de Bases de Datos con el profesor Avilés, probable
 
 #### 2.2. Docker (Entorno limpio)
 
-Si no tienes PostgreSQL instalado en tu PC ni tienes contenedores previos configurados, puedes levantar todo el entorno automáticamente usando el archivo `compose.yaml` del proyecto.
+Si no tienes PostgreSQL instalado en tu PC ni tienes contenedores previos configurados, puedes levantar todo el entorno automáticamente usando el archivo `compose.yml` del proyecto.
 
-*(⚠️ Advertencia: Si realizaste cualquier paso de la sección 1, ignora esta sección).*
+*( Advertencia: Si realizaste cualquier paso de la sección 1, ignora esta sección).*
 
 1. Abre una terminal en la raíz del proyecto.
 2. Ejecuta el siguiente comando para descargar y levantar la base de datos en segundo plano:
@@ -125,8 +125,13 @@ Si no tienes PostgreSQL instalado en tu PC ni tienes contenedores previos config
 Si todo está configurado correctamente, el backend se levantará en el puerto
 `8080` y establecerá la conexión con PostgreSQL.
 
-Actualmente no hay endpoints disponibles, por lo que acceder 
-a la raíz de la aplicación puede responder con un error `404 Not Found`.
+Accediendo a la raíz (`http://localhost:8080/`) puede responder con un
+error `404 Not Found`, eso es normal — no hay ningún endpoint ahí. Prueba
+en su lugar un endpoint real, por ejemplo:
+
+```
+http://localhost:8080/conciertos?artista=queen
+```
 
 ## Documentación adicional
 
