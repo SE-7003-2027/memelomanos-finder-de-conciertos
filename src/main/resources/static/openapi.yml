@@ -9,7 +9,7 @@ servers:
 
 paths:
   # ==========================================
-  # ENDPOINTS PÚBLICOS (Sin candado)
+  # CONCIERTOS
   # ==========================================
   /conciertos:
     get:
@@ -34,12 +34,16 @@ paths:
                 items:
                   $ref: '#/components/schemas/Concierto'
 
-  /auth/registro:
+  # ==========================================
+  # USUARIOS
+  # (sin autenticacion todavia; se identifica al usuario por correo)
+  # ==========================================
+  /usuarios/registro:
     post:
       summary: Registrar un nuevo usuario
       description: Crea un nuevo perfil de usuario en la base de datos.
       tags:
-        - Autenticación
+        - Usuarios
       requestBody:
         required: true
         content:
@@ -49,16 +53,12 @@ paths:
               required:
                 - nombre
                 - correo
-                - password
               properties:
                 nombre:
                   type: string
                 correo:
                   type: string
                   format: email
-                password:
-                  type: string
-                  format: password
       responses:
         '201':
           description: Usuario creado exitosamente
@@ -66,54 +66,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Usuario'
+        '400':
+          description: El correo ya esta registrado
 
-  /auth/login:
-    post:
-      summary: Iniciar sesión
-      description: Valida las credenciales y devuelve un token de acceso (JWT).
-      tags:
-        - Autenticación
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - correo
-                - password
-              properties:
-                correo:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                  format: password
-      responses:
-        '200':
-          description: Autenticación exitosa
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    description: Token Bearer (JWT) para acceder a las rutas privadas
-        '401':
-          description: Credenciales inválidas
-
-  # ==========================================
-  # ENDPOINTS PRIVADOS (Con candado 🔒)
-  # ==========================================
-  /usuarios/me:
+  /usuarios/perfil:
     get:
       summary: Obtener perfil del usuario
-      description: Devuelve los datos del usuario autenticado, incluyendo su lista de conciertos favoritos.
-      security:
-        - bearerAuth: []
+      description: Devuelve los datos de un usuario a partir de su correo.
       tags:
         - Usuarios
+      parameters:
+        - name: correo
+          in: query
+          description: Correo del usuario a consultar
+          required: true
+          schema:
+            type: string
+            format: email
       responses:
         '200':
           description: Perfil del usuario
@@ -121,9 +90,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Usuario'
-        '401':
-          $ref: '#/components/responses/NoAutorizado'
+        '404':
+          description: Usuario no encontrado
 
+  # ==========================================
+  # PENDIENTES DE IMPLEMENTAR
+  # Estos endpoints requieren autenticacion (JWT) y se definiran a
+  # detalle cuando el equipo decida implementar login/auth.
+  # ==========================================
   /usuarios/me/favoritos:
     post:
       summary: Agregar un concierto a favoritos
