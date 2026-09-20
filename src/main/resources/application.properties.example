@@ -8,3 +8,6 @@ spring.datasource.password=tu_password
 
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
+
+# Esto es para que se muestren las APIs en el URL aunque no estén implementadas
+springdoc.swagger-ui.url=/swagger/openapi.yaml

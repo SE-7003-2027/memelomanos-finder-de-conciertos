@@ -1,0 +1,303 @@
+openapi: 3.0.3
+info:
+  title: Finder de Conciertos API
+  version: 1.0.0
+  description: API para la aplicación Finder de Conciertos - Team 8 (memelomanos).
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Servidor de desarrollo local
+
+paths:
+  # ==========================================
+  # ENDPOINTS PÚBLICOS (Sin candado)
+  # ==========================================
+  /conciertos:
+    get:
+      summary: Buscar conciertos
+      description: Obtiene la lista global de conciertos. Permite filtrar por artista.
+      tags:
+        - Conciertos
+      parameters:
+        - name: artista
+          in: query
+          description: Nombre del artista para filtrar los resultados
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de conciertos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Concierto'
+
+  /auth/registro:
+    post:
+      summary: Registrar un nuevo usuario
+      description: Crea un nuevo perfil de usuario en la base de datos.
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+                - correo
+                - password
+              properties:
+                nombre:
+                  type: string
+                correo:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+
+  /auth/login:
+    post:
+      summary: Iniciar sesión
+      description: Valida las credenciales y devuelve un token de acceso (JWT).
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - correo
+                - password
+              properties:
+                correo:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Token Bearer (JWT) para acceder a las rutas privadas
+        '401':
+          description: Credenciales inválidas
+
+  # ==========================================
+  # ENDPOINTS PRIVADOS (Con candado 🔒)
+  # ==========================================
+  /usuarios/me:
+    get:
+      summary: Obtener perfil del usuario
+      description: Devuelve los datos del usuario autenticado, incluyendo su lista de conciertos favoritos.
+      security:
+        - bearerAuth: []
+      tags:
+        - Usuarios
+      responses:
+        '200':
+          description: Perfil del usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+
+  /usuarios/me/favoritos:
+    post:
+      summary: Agregar un concierto a favoritos
+      description: Añade un concierto a la lista de favoritos del usuario utilizando el método agregarFavorito() de la entidad.
+      security:
+        - bearerAuth: []
+      tags:
+        - Usuarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conciertoId:
+                  type: integer
+                  format: int64
+                  description: ID del concierto a agregar
+      responses:
+        '200':
+          description: Concierto agregado a favoritos exitosamente
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+        '404':
+          description: Concierto no encontrado
+
+  /usuarios/me/favoritos/{conciertoId}:
+    delete:
+      summary: Eliminar un concierto de favoritos
+      description: Remueve un concierto de la lista de favoritos del usuario autenticado.
+      security:
+        - bearerAuth: []
+      tags:
+        - Usuarios
+      parameters:
+        - name: conciertoId
+          in: path
+          required: true
+          description: ID del concierto a eliminar
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Concierto eliminado de favoritos exitosamente (Sin contenido)
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+        '404':
+          description: Concierto no encontrado en la lista del usuario
+
+  /usuarios/me/artistas-top:
+    get:
+      summary: Obtener artistas más escuchados
+      description: Devuelve la lista de los artistas más escuchados por el usuario.
+      security:
+        - bearerAuth: []
+      tags:
+        - Usuarios
+      parameters:
+        - name: limit
+          in: query
+          description: Cantidad máxima de artistas a devolver (ej. Top 10, Top 50)
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Lista de artistas top obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Artista'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+
+  /usuarios/me/conciertos-recomendados:
+    get:
+      summary: Obtener conciertos recomendados
+      description: Devuelve una lista de próximos conciertos basándose en los artistas más escuchados por el usuario.
+      security:
+        - bearerAuth: []
+      tags:
+        - Usuarios
+        - Conciertos
+      parameters:
+        - name: ciudad
+          in: query
+          description: Filtrar recomendaciones por ciudad
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de conciertos recomendados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Concierto'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+
+# ==========================================
+# COMPONENTES Y ESQUEMAS (Modelos)
+# ==========================================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    NoAutorizado:
+      description: No autorizado. El usuario no ha iniciado sesión, no envió el token, o el token expiró.
+
+  schemas:
+    Concierto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID autogenerado del concierto
+        artista:
+          type: string
+          description: Nombre del artista o banda
+        fecha:
+          type: string
+          format: date
+          description: Fecha del evento en formato YYYY-MM-DD
+        ciudad:
+          type: string
+          description: Ciudad donde se realizará el concierto
+        lugar:
+          type: string
+          description: Recinto o lugar del evento
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID autogenerado del usuario
+        nombre:
+          type: string
+          description: Nombre completo del usuario
+        correo:
+          type: string
+          description: Correo electrónico del usuario
+        favoritos:
+          type: array
+          description: Lista de conciertos que el usuario ha marcado como favoritos
+          items:
+            $ref: '#/components/schemas/Concierto'
+
+    Artista:
+      type: object
+      properties:
+        nombre:
+          type: string
+          description: Nombre del artista o banda
+        urlImagen:
+          type: string
+          format: uri
+          description: URL de la foto de perfil del artista
+        generos:
+          type: array
+          description: Lista de géneros musicales asociados al artista
+          items:
+            type: string
