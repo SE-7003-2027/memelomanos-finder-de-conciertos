@@ -52,3 +52,29 @@ ejemplo, comparándola con hacer una interfaz web en su lugar).
 - Confirmar como equipo si Swing es la opción definitiva o si se
   explora una interfaz web
 - Actualizar este ADR a "Aceptada" una vez que la decisión sea final
+
+## Alternativas
+- Utilizar el motor de plantillas de Thymeleaf
+- Utilizar un frontend desacomplado Ej. JS con Vue, React, Angular.
+
+### Thymeleaf
+En lugar de crear una API REST y un cliente separado, el backend renderiza las vistas HTML directamente en el servidor utilizando Thymeleaf y las envía al navegador.
+* **Pros:** 
+  * Reduce la complejidad operativa: hay un solo proyecto, un solo repositorio y un solo despliegue.
+  * Todo el equipo puede mantenerse trabajando 100% en el ecosistema Java/Spring.
+  * Elimina la necesidad de lidiar con problemas de comunicación por red (CORS, serialización JSON) entre el frontend y el backend.
+* **Contras:** 
+  * Acopla fuertemente la interfaz de usuario con el backend.
+  * Si en el futuro se requiere una aplicación móvil nativa, habría que construir la API REST de todos modos.
+  * La experiencia de usuario es menos interactiva y fluida en comparación con aplicaciones modernas.
+
+### 2. Arquitectura Desacoplada con Frontend Web Moderno (React / Vue / Angular)
+Se mantiene la decisión de exponer una API REST desde Spring Boot, pero en lugar de consumir los datos con una aplicación de escritorio en Swing, se construye una Single Page Application (SPA) para la web.
+
+* **Pros:** 
+  * Distribución universal: cualquier usuario con un navegador puede usar la app sin instalar nada en su computadora (a diferencia de Swing).
+  * Ecosistema masivo: es el estándar actual de la industria, lo que facilita encontrar bibliotecas de UI modernas y resolver problemas.
+  * Valida estrictamente la API REST, dejándola lista para futuros clientes (como apps móviles).
+* **Contras:** 
+  * Requiere que el equipo aprenda e integre un stack tecnológico completamente distinto (JavaScript/TypeScript, NPM, Node.js).
+  * Aumenta la carga de infraestructura, ya que se deben configurar pipelines de despliegue separados para el frontend (ej. Vercel, Netlify o AWS S3) y el backend.
