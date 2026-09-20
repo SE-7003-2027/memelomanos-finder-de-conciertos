@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_conciertos
+    environment:
+      POSTGRES_DB: finder_conciertos
+      POSTGRES_USER: usuario # No editen esto, funciona por sí solo
+      POSTGRES_PASSWORD: password # No editen esto, funciona por sí solo
+    ports:
+      # Mapea el puerto 5432 del contenedor al puerto 5432 del (localhost)
+      - "5432:5432"
+    volumes:
+      # Guarda los datos en disco duro para que no se borren al apagar el contenedor
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

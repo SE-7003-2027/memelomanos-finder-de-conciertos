@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/finder_conciertos}
+    username: ${DB_USER:tu_usuario}
+    password: ${DB_PASSWORD:tu_password}
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+springdoc:
+  swagger-ui:
+    url: /swagger/openapi.yaml

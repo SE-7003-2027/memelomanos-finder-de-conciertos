@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.memelomanos</groupId>
+    <artifactId>finder-de-conciertos</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>finder-de-conciertos</name>
+    <description>Finder de Conciertos - proyecto de Ingenieria en Software, Team 8 (memelomanos)</description>
+
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Anotaciones de Swagger para documentar el código generado -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>2.2.15</version>
+        </dependency>
+        <!-- Validaciones de Spring (necesario si el YAML tiene campos 'required') -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+
+        <!-- Requerida por el codigo generado del contrato OpenAPI, que usa
+             JsonNullable para representar campos opcionales -->
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.6</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.1.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Ruta a tu archivo YAML -->
+                            <inputSpec>${project.basedir}/src/main/resources/static/openapi.yml</inputSpec>
+
+                            <!-- Generador para Spring -->
+                            <generatorName>spring</generatorName>
+
+                            <!-- Paquetes donde se generará el código -->
+                            <apiPackage>com.memelomanos.conciertos.api</apiPackage>
+                            <modelPackage>com.memelomanos.conciertos.model</modelPackage>
+
+                            <configOptions>
+                                <!-- Crucial: Solo genera las interfaces, no los controladores -->
+                                <interfaceOnly>true</interfaceOnly>
+                                <!-- Usa anotaciones de Jakarta (Spring Boot 3) -->
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <!-- Evita generar dependencias innecesarias de validación extra si no las usas -->
+                                <performBeanValidation>true</performBeanValidation>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
