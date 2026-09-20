@@ -23,7 +23,7 @@ avancemos, para que siempre refleje el estado real del proyecto.
 
 ### Features (en desarrollo)
 
-Funcionalidades comprometidas por el equipo para el sprint actual:
+Funcionalidades comprometidas por el equipo:
 
 - [x] Búsqueda de conciertos por artista
 - [ ] Visualización de la información básica de un concierto (artista, fecha, ciudad o lugar)
