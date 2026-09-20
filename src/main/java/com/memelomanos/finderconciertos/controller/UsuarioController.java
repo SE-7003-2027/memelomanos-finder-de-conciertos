@@ -1,10 +1,12 @@
 package com.memelomanos.finderconciertos.controller;
 
+import com.memelomanos.finderconciertos.model.RegistroRequest;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,12 +25,12 @@ public class UsuarioController {
     }
 
     @PostMapping("/usuarios/registro")
-    public Usuario registrarUsuario(@RequestParam String nombre, @RequestParam String correo) {
-        return usuarioService.registrarUsuario(nombre, correo);
+    public Usuario registrarUsuario(@RequestBody RegistroRequest request) {
+        return usuarioService.registrarUsuario(request.getNombre(), request.getCorreo());
     }
 
     @GetMapping("/usuarios/perfil")
     public Usuario obtenerPerfil(@RequestParam String correo) {
-        return usuarioService.searchProfileByCorreo(correo);
+        return usuarioService.buscarPerfilPorCorreo(correo);
     }
 }
