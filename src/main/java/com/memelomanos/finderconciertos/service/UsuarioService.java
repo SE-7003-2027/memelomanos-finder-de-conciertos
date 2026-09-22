@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.service;
 
+import com.memelomanos.finderconciertos.exception.ConciertoNoEncontradoException;
 import com.memelomanos.finderconciertos.exception.CorreoDuplicadoException;
 import com.memelomanos.finderconciertos.exception.UsuarioNoEncontradoException;
 import com.memelomanos.finderconciertos.model.Concierto;
@@ -41,12 +42,15 @@ public class UsuarioService {
     public Usuario agregarFavorito(Long usuarioId, Long conciertoId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new UsuarioNoEncontradoException("Usuario no encontrado"));
-
         Concierto concierto = conciertoRepository.findById(conciertoId)
-                .orElseThrow(() -> new UsuarioNoEncontradoException("Concierto no encontrado"));
+                .orElseThrow(() -> new ConciertoNoEncontradoException("Concierto no encontrado"));
 
-        usuario.agregarFavorito(concierto);
+        // Evita agregar el mismo concierto dos veces a favoritos.
+        if (!usuario.getFavoritos().contains(concierto)) {
+            usuario.agregarFavorito(concierto);
+            usuario = usuarioRepository.save(usuario);
+        }
 
-        return usuarioRepository.save(usuario);
+        return usuario;
     }
 }

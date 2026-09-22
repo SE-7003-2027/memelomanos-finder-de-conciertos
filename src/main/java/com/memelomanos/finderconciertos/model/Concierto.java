@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
+import java.util.Objects;
 
 // Entidad que representa un concierto. Por ahora solo tiene los
 // campos basicos que definimos en el PRD (artista, fecha, ciudad,
@@ -68,5 +69,27 @@ public class Concierto {
 
     public void setLugar(String lugar) {
         this.lugar = lugar;
+    }
+
+    // Sin esto, dos objetos Concierto que representan la misma fila
+    // en la base de datos no se consideran "iguales" al compararlos
+    // (por ejemplo con .contains() en una lista), aunque tengan el
+    // mismo id. Comparamos por id porque es lo que identifica de
+    // verdad a un concierto ya guardado.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Concierto concierto = (Concierto) o;
+        return id != null && id.equals(concierto.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }
