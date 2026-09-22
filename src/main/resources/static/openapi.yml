@@ -93,10 +93,45 @@ paths:
         '404':
           description: Usuario no encontrado
 
+  /usuarios/favoritos:
+    post:
+      summary: Marcar un concierto como favorito
+      description: >
+        Añade un concierto a la lista de favoritos de un usuario.
+        Version temporal sin autenticacion: recibe usuarioId
+        explicitamente en el body. Cuando se implemente login, este
+        endpoint debera cambiar a /usuarios/me/favoritos identificando
+        al usuario por su token.
+      tags:
+        - Usuarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - usuarioId
+                - conciertoId
+              properties:
+                usuarioId:
+                  type: integer
+                  format: int64
+                conciertoId:
+                  type: integer
+                  format: int64
+      responses:
+        '200':
+          description: Concierto agregado a favoritos exitosamente (o ya estaba)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '404':
+          description: Usuario o concierto no encontrado
+
   # ==========================================
-  # PENDIENTES DE IMPLEMENTAR
-  # Estos endpoints requieren autenticacion (JWT) y se definiran a
-  # detalle cuando el equipo decida implementar login/auth.
+  # PENDIENTES DE IMPLEMENTAR (requieren auth)
   # ==========================================
   /usuarios/me/favoritos:
     post:
