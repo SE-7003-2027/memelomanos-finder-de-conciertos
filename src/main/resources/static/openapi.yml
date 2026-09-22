@@ -8,9 +8,7 @@ servers:
     description: Servidor de desarrollo local
 
 paths:
-  # ==========================================
-  # CONCIERTOS
-  # ==========================================
+  # Conciertos
   /conciertos:
     get:
       summary: Buscar conciertos
@@ -34,10 +32,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Concierto'
 
-  # ==========================================
-  # USUARIOS
-  # (sin autenticacion todavia; se identifica al usuario por correo)
-  # ==========================================
+  # Usuarios
   /usuarios/registro:
     post:
       summary: Registrar un nuevo usuario
@@ -130,9 +125,7 @@ paths:
         '404':
           description: Usuario o concierto no encontrado
 
-  # ==========================================
-  # PENDIENTES DE IMPLEMENTAR (requieren auth)
-  # ==========================================
+  # Endpoints con autenticacion (Bearer token)
   /usuarios/me/favoritos:
     post:
       summary: Agregar un concierto a favoritos
@@ -240,9 +233,7 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutorizado'
 
-# ==========================================
-# COMPONENTES Y ESQUEMAS (Modelos)
-# ==========================================
+# Componentes reutilizables
 components:
   securitySchemes:
     bearerAuth:

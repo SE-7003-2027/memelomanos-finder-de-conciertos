@@ -6,12 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
-/**
- * Aqui va la logica de negocio de Concierto. Por ahora es simple
- * (solo delega al repository), pero si mas adelante necesitamos
- * validar algo o combinar datos de varias fuentes, va aqui y no en
- * el controller.
- */
+// Aqui va la logica de negocio de Concierto. Por ahora es simple
+// (solo delega al repository), pero si mas adelante necesitamos
+// validar algo o combinar datos de varias fuentes, va aqui y no en
+// el controller.
 @Service
 public class ConciertoService {
 
@@ -22,7 +20,12 @@ public class ConciertoService {
         this.conciertoRepository = conciertoRepository;
     }
 
+    // Si no se manda artista, regresa la lista completa de
+    // conciertos disponibles. Si se manda, filtra por artista.
     public List<Concierto> buscarPorArtista(String artista) {
+        if (artista == null || artista.isBlank()) {
+            return conciertoRepository.findAll();
+        }
         return conciertoRepository.findByArtistaContainingIgnoreCase(artista);
     }
 }

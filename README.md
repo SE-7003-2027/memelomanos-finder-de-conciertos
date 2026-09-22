@@ -23,12 +23,12 @@ avancemos, para que siempre refleje el estado real del proyecto.
 
 ### Features (en desarrollo)
 
-Funcionalidades comprometidas por el equipo:
+Funcionalidades comprometidas por el equipo para el sprint actual:
 
 - [x] Búsqueda de conciertos por artista
-- [ ] Visualización de la información básica de un concierto (artista, fecha, ciudad o lugar)
-- [ ] Lista de conciertos disponibles
-- [ ] Creación y consulta de un perfil de usuario
+- [x] Visualización de la información básica de un concierto (artista, fecha, ciudad o lugar)
+- [x] Lista de conciertos disponibles
+- [x] Creación y consulta de un perfil de usuario
 - [ ] Marcar conciertos de interés para el usuario
 
 ## Stack

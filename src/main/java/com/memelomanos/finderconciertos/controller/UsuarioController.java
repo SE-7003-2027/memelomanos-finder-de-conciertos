@@ -36,10 +36,13 @@ public class UsuarioController {
         return usuarioService.buscarPerfilPorCorreo(correo);
     }
 
-    // Nota: este endpoint identifica al usuario con usuarioId en el
-    // body porque todavia no hay autenticacion. Cuando se implemente
-    // login, esto deberia cambiar a identificar al usuario por su
-    // token en vez de recibir el id explicitamente.
+    /**
+     * Agrega un concierto a los favoritos del usuario.
+     * este endpoint identifica al usuario con usuarioId en el
+     * body porque todavia no hay autenticacion. Cuando se implemente
+     * login, esto deberia cambiar a identificar al usuario por su
+     * token en vez de recibir el id explicitamente.
+     */
     @PostMapping("/usuarios/favoritos")
     public Usuario agregarFavorito(@RequestBody FavoritoRequest request) {
         return usuarioService.agregarFavorito(request.getUsuarioId(), request.getConciertoId());
