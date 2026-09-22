@@ -8,11 +8,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
-/**
- * Expone el endpoint GET /conciertos?artista=X
- * El controller solo recibe la peticion y llama al service, no
- * tiene logica de negocio aqui.
- */
+// Expone el endpoint GET /conciertos
+// Sin el parametro artista regresa la lista completa; con el
+// parametro, filtra por artista. El controller solo recibe la
+// peticion y llama al service, no tiene logica de negocio aqui.
 @RestController
 public class ConciertoController {
 
@@ -24,7 +23,7 @@ public class ConciertoController {
     }
 
     @GetMapping("/conciertos")
-    public List<Concierto> buscarPorArtista(@RequestParam String artista) {
+    public List<Concierto> buscarPorArtista(@RequestParam(required = false) String artista) {
         return conciertoService.buscarPorArtista(artista);
     }
 }

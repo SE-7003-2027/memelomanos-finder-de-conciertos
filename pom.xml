@@ -61,7 +61,7 @@
         </dependency>
 
         <!-- Requerida por el codigo generado del contrato OpenAPI, que usa
-             JsonNullable para representar campos opcionales -->
+        JsonNullable para representar campos opcionales -->
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
