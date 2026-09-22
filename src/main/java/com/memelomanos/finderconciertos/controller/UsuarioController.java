@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.controller;
 
+import com.memelomanos.finderconciertos.model.FavoritoRequest;
 import com.memelomanos.finderconciertos.model.RegistroRequest;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
@@ -11,8 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Expone los endpoints para el registro y consulta de perfil de usuario.
- * El controller solo recibe la peticion y llama al service.
+ * Expone los endpoints para el registro, consulta de perfil, y
+ * favoritos de usuario. El controller solo recibe la peticion y
+ * llama al service.
  */
 @RestController
 public class UsuarioController {
@@ -34,9 +36,12 @@ public class UsuarioController {
         return usuarioService.buscarPerfilPorCorreo(correo);
     }
 
+    // Nota: este endpoint identifica al usuario con usuarioId en el
+    // body porque todavia no hay autenticacion. Cuando se implemente
+    // login, esto deberia cambiar a identificar al usuario por su
+    // token en vez de recibir el id explicitamente.
     @PostMapping("/usuarios/favoritos")
-    public Usuario agregarFavorito(@RequestParam Long usuarioId,
-                                   @RequestParam Long conciertoId) {
-        return usuarioService.agregarFavorito(usuarioId, conciertoId);
+    public Usuario agregarFavorito(@RequestBody FavoritoRequest request) {
+        return usuarioService.agregarFavorito(request.getUsuarioId(), request.getConciertoId());
     }
 }
