@@ -33,4 +33,10 @@ public class UsuarioController {
     public Usuario obtenerPerfil(@RequestParam String correo) {
         return usuarioService.buscarPerfilPorCorreo(correo);
     }
+
+    @PostMapping("/usuarios/favoritos")
+    public Usuario agregarFavorito(@RequestParam Long usuarioId,
+                                   @RequestParam Long conciertoId) {
+        return usuarioService.agregarFavorito(usuarioId, conciertoId);
+    }
 }
