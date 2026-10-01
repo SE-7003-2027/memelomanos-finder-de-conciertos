@@ -6,10 +6,12 @@ import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -27,7 +29,9 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
+    // 201 Created porque se crea un recurso nuevo (asi lo dice el contrato).
     @PostMapping("/usuarios/registro")
+    @ResponseStatus(HttpStatus.CREATED)
     public Usuario registrarUsuario(@Valid @RequestBody RegistroRequest request) {
         return usuarioService.registrarUsuario(request.getNombre(), request.getCorreo());
     }
