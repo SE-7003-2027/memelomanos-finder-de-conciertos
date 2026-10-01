@@ -11,4 +11,6 @@ spring:
 
 springdoc:
   swagger-ui:
-    url: /swagger/openapi.yaml
+    # Apunta al contrato escrito a mano (src/main/resources/static/openapi.yml),
+    # que Spring sirve como archivo estatico en /openapi.yml.
+    url: /openapi.yml
