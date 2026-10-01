@@ -62,7 +62,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Usuario'
         '400':
+          $ref: '#/components/responses/PeticionInvalida'
+        '409':
           description: El correo ya esta registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /usuarios/perfil:
     get:
@@ -85,8 +91,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/PeticionInvalida'
         '404':
-          description: Usuario no encontrado
+          $ref: '#/components/responses/NoEncontrado'
 
   /usuarios/favoritos:
     post:
@@ -122,8 +130,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/PeticionInvalida'
         '404':
-          description: Usuario o concierto no encontrado
+          $ref: '#/components/responses/NoEncontrado'
 
   # Endpoints con autenticacion (Bearer token)
   /usuarios/me/favoritos:
@@ -244,8 +254,47 @@ components:
   responses:
     NoAutorizado:
       description: No autorizado. El usuario no ha iniciado sesión, no envió el token, o el token expiró.
+    PeticionInvalida:
+      description: Faltan datos, tienen un formato invalido o el JSON esta mal formado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 400
+            error: Bad Request
+            mensaje: "correo: debe ser una dirección de correo electrónico con formato correcto"
+            timestamp: "2026-10-01T12:00:00"
+    NoEncontrado:
+      description: El recurso solicitado no existe.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 404
+            error: Not Found
+            mensaje: Usuario no encontrado
+            timestamp: "2026-10-01T12:00:00"
 
   schemas:
+    Error:
+      type: object
+      description: Forma comun de todas las respuestas de error de la API.
+      properties:
+        status:
+          type: integer
+          description: Codigo HTTP (se repite en el body para comodidad del cliente)
+        error:
+          type: string
+          description: Nombre del codigo HTTP (ej. Not Found)
+        mensaje:
+          type: string
+          description: Explicacion legible del error
+        timestamp:
+          type: string
+          format: date-time
+
     Concierto:
       type: object
       properties:
