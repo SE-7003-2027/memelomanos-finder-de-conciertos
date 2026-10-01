@@ -130,7 +130,15 @@ error `404 Not Found`, eso es normal — no hay ningún endpoint ahí. Prueba
 en su lugar un endpoint real, por ejemplo:
 
 ```
-http://localhost:8080/conciertos?artista=queen
+http://localhost:8080/api/v1/conciertos?artista=queen
+```
+
+Todos los endpoints viven bajo el prefijo `/api/v1`. El contrato completo
+de la API (y un cliente para probar cada endpoint desde el navegador) está
+en Swagger UI:
+
+```
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ## Documentación adicional

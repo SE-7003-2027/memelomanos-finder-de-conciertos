@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
-// Expone el endpoint GET /conciertos
+// Expone el endpoint GET /api/v1/conciertos (el prefijo lo pone WebConfig).
 // Sin el parametro artista regresa la lista completa; con el
 // parametro, filtra por artista. El controller solo recibe la
 // peticion y llama al service, no tiene logica de negocio aqui.
