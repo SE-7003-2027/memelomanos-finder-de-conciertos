@@ -4,6 +4,7 @@ import com.memelomanos.finderconciertos.model.FavoritoRequest;
 import com.memelomanos.finderconciertos.model.RegistroRequest;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +28,7 @@ public class UsuarioController {
     }
 
     @PostMapping("/usuarios/registro")
-    public Usuario registrarUsuario(@RequestBody RegistroRequest request) {
+    public Usuario registrarUsuario(@Valid @RequestBody RegistroRequest request) {
         return usuarioService.registrarUsuario(request.getNombre(), request.getCorreo());
     }
 
@@ -44,7 +45,7 @@ public class UsuarioController {
      * token en vez de recibir el id explicitamente.
      */
     @PostMapping("/usuarios/favoritos")
-    public Usuario agregarFavorito(@RequestBody FavoritoRequest request) {
+    public Usuario agregarFavorito(@Valid @RequestBody FavoritoRequest request) {
         return usuarioService.agregarFavorito(request.getUsuarioId(), request.getConciertoId());
     }
 }
