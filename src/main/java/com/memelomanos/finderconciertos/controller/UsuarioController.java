@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Expone los endpoints para el registro, consulta de perfil, y
  * favoritos de usuario. El controller solo recibe la peticion y
- * llama al service.
+ * llama al service. Todas las rutas quedan bajo /api/v1 (ver WebConfig).
  */
 @RestController
 public class UsuarioController {
