@@ -26,9 +26,10 @@ public class ConciertoController {
     }
 
     @GetMapping("/conciertos")
-    public List<Concierto> buscarPorArtista(
-            @RequestParam(required = false) String artista) {
-        return conciertoService.buscarPorArtista(artista);
+    public List<Concierto> buscar(
+            @RequestParam(required = false) String artista,
+            @RequestParam(required = false) String ciudad) {
+        return conciertoService.buscar(artista, ciudad);
     }
 
     @GetMapping("/conciertos/{id}")

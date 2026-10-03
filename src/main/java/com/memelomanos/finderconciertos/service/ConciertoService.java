@@ -24,10 +24,30 @@ public class ConciertoService {
     }
 
     public List<Concierto> buscarPorArtista(String artista) {
-        if (artista == null || artista.isBlank()) {
-            return conciertoRepository.findAll();
+        return buscar(artista, null);
+    }
+
+    public List<Concierto> buscar(String artista, String ciudad) {
+        String filtroArtista = artista == null ? "" : artista.strip();
+        String filtroCiudad = ciudad == null ? "" : ciudad.strip();
+
+        if (!filtroArtista.isEmpty() && !filtroCiudad.isEmpty()) {
+            return conciertoRepository
+                    .findByArtistaContainingIgnoreCaseAndCiudadContainingIgnoreCase(
+                            filtroArtista, filtroCiudad);
         }
-        return conciertoRepository.findByArtistaContainingIgnoreCase(artista);
+
+        if (!filtroArtista.isEmpty()) {
+            return conciertoRepository.findByArtistaContainingIgnoreCase(
+                    filtroArtista);
+        }
+
+        if (!filtroCiudad.isEmpty()) {
+            return conciertoRepository.findByCiudadContainingIgnoreCase(
+                    filtroCiudad);
+        }
+
+        return conciertoRepository.findAll();
     }
 
     public Concierto buscarPorId(Long id) {
