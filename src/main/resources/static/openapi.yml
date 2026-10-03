@@ -12,13 +12,23 @@ paths:
   /conciertos:
     get:
       summary: Buscar conciertos
-      description: Obtiene la lista global de conciertos. Permite filtrar por artista.
+      description: >
+        Obtiene la lista global de conciertos disponibles.
+        Permite filtrar por artista y ciudad.
+        Busca coincidencias parciales e ignora mayusculas.
+        Si se envian ambos filtros, se aplican los dos.
       tags:
         - Conciertos
       parameters:
         - name: artista
           in: query
           description: Nombre del artista para filtrar los resultados
+          required: false
+          schema:
+            type: string
+        - name: ciudad
+          in: query
+          description: Ciudad para filtrar los resultados
           required: false
           schema:
             type: string
@@ -31,6 +41,87 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Concierto'
+
+    post:
+      summary: Crear un concierto
+      tags:
+        - Conciertos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConciertoRequest'
+      responses:
+        '201':
+          description: Concierto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Concierto'
+        '400':
+          $ref: '#/components/responses/PeticionInvalida'
+
+  /conciertos/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: ID del concierto que se desea consultar, actualizar o eliminar
+        required: true
+        schema:
+          type: integer
+          format: int64
+
+    get:
+      summary: Consultar un concierto por ID
+      tags:
+        - Conciertos
+      responses:
+        '200':
+          description: Concierto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Concierto'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+    put:
+      summary: Actualizar un concierto por ID
+      description: Reemplaza todos los datos editables del concierto.
+      tags:
+        - Conciertos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConciertoRequest'
+      responses:
+        '200':
+          description: Concierto actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Concierto'
+        '400':
+          $ref: '#/components/responses/PeticionInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+    delete:
+      summary: Eliminar un concierto por ID
+      description: >
+        Quita el concierto de los favoritos de todos los usuarios
+        que lo tengan guardado y luego lo elimina.
+        Las dos operaciones se realizan en una misma transaccion.
+      tags:
+        - Conciertos
+      responses:
+        '204':
+          description: Concierto eliminado exitosamente. Sin contenido.
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
 
   # Usuarios
   /usuarios/registro:
@@ -315,6 +406,41 @@ components:
         lugar:
           type: string
           description: Recinto o lugar del evento
+    
+    ConciertoRequest:
+      type: object
+      description: Datos necesarios para crear o actualizar un concierto
+      additionalProperties: false
+      required:
+        - artista
+        - fecha
+        - ciudad
+        - lugar
+      properties:
+        artista:
+          type: string
+          description: Nombre del artista o banda
+          minLength: 1
+          pattern: '\S'
+        fecha:
+          type: string
+          format: date
+          description: Fecha del evento en formato YYYY-MM-DD
+        ciudad:
+          type: string
+          description: Ciudad donde se realizará el concierto
+          minLength: 1
+          pattern: '\S'
+        lugar:
+          type: string
+          description: Recinto o lugar del evento
+          minLength: 1
+          pattern: '\S'
+      example:
+        artista: Queen
+        fecha: '2027-02-20'
+        ciudad: CDMX
+        lugar: Auditorio Nacional
 
     Usuario:
       type: object
