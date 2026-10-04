@@ -1,0 +1,161 @@
+{
+  "info": {
+    "_postman_id": "8d3f3f8e-6e0d-4a42-9e3c-39f8b2c1a701",
+    "name": "Finder de Conciertos API",
+    "description": "Colección para probar los endpoints actuales de la API Finder de Conciertos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "usuarioId",
+      "value": "1"
+    },
+    {
+      "key": "conciertoId",
+      "value": "1"
+    },
+    {
+      "key": "correo",
+      "value": "saul.prueba@example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "Conciertos",
+      "item": [
+        {
+          "name": "Listar conciertos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conciertos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conciertos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar conciertos por artista",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conciertos?artista=queen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conciertos"
+              ],
+              "query": [
+                {
+                  "key": "artista",
+                  "value": "queen"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario de Prueba\",\n  \"correo\": \"{{$timestamp}}@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "registro"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Consultar perfil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/perfil?correo={{correo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "perfil"
+              ],
+              "query": [
+                {
+                  "key": "correo",
+                  "value": "{{correo}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Agregar favorito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{usuarioId}},\n  \"conciertoId\": {{conciertoId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/favoritos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "favoritos"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
