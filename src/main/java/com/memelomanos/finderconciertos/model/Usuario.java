@@ -59,9 +59,11 @@ public class Usuario {
         return favoritos;
     }
 
-    // Metodo simple para agregar un favorito sin tener que exponer
-    // la lista completa para modificarla desde afuera.
     public void agregarFavorito(Concierto concierto) {
         favoritos.add(concierto);
     }
+
+    public void quitarFavorito(Concierto concierto) {
+    favoritos.remove(concierto);
+}
 }

@@ -226,6 +226,152 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
+
+  /usuarios/{id}:
+    get:
+      summary: Obtener usuario por ID
+      description: Devuelve los datos de un usuario a partir de su ID.
+      tags:
+        - Usuarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Usuario obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+    put:
+      summary: Actualizar usuario
+      description: Actualiza el nombre y correo de un usuario.
+      tags:
+        - Usuarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+                - correo
+              properties:
+                nombre:
+                  type: string
+                correo:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Usuario actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/PeticionInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El correo ya está registrado por otro usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Eliminar usuario
+      description: Elimina un usuario a partir de su ID.
+      tags:
+        - Usuarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Usuario eliminado exitosamente
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /usuarios/{id}/favoritos:
+    get:
+      summary: Obtener favoritos de un usuario
+      description: Devuelve la lista de conciertos favoritos del usuario.
+      tags:
+        - Usuarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Lista de favoritos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Concierto'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /usuarios/{id}/favoritos/{conciertoId}:
+    delete:
+      summary: Quitar concierto de favoritos
+      description: Elimina un concierto de la lista de favoritos del usuario.
+      tags:
+        - Usuarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: integer
+            format: int64
+        - name: conciertoId
+          in: path
+          required: true
+          description: ID del concierto
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Concierto eliminado de favoritos exitosamente
+        '404':
+          description: Usuario o favorito no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   # Endpoints con autenticacion (Bearer token)
   /usuarios/me/favoritos:
     post:
