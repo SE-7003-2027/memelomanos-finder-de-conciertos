@@ -16,6 +16,12 @@ Primero, desde la raíz del proyecto, levanta la base de datos:
 docker compose up -d
 ```
 
+Si Docker muestra un error de permisos al acceder al socket `/var/run/docker.sock`, se puede utilizar:
+
+```bash
+sudo docker compose up -d
+```
+
 Después inicia la aplicación:
 
 ```bash
@@ -44,13 +50,16 @@ http://localhost:8080/swagger-ui/index.html
 
 ## 2. Flujo básico de prueba
 
-El flujo recomendado para comprobar que las funciones principales trabajan correctamente es:
+El flujo recomendado para comprobar las funciones principales de la API es:
 
 1. Registrar un usuario.
 2. Consultar la lista de conciertos.
 3. Obtener el perfil del usuario.
 4. Agregar un concierto a favoritos.
-5. Consultar nuevamente el perfil para comprobar el favorito.
+5. Consultar los favoritos del usuario.
+6. Quitar el concierto de favoritos.
+7. Consultar el usuario por ID.
+8. Actualizar los datos del usuario.
 
 > Para las pruebas de favoritos se necesita conocer un `usuarioId` y un `conciertoId` existentes en la base de datos.
 
@@ -96,7 +105,7 @@ Ejemplo:
 }
 ```
 
-Guarda el `id` obtenido porque se utilizará para agregar favoritos.
+Guarda el `id` obtenido porque se utilizará para las pruebas de favoritos y de los endpoints por ID.
 
 ---
 
@@ -185,15 +194,170 @@ La respuesta contiene el usuario actualizado con el concierto agregado a favorit
 
 ---
 
-### 3.5 Comprobar el favorito
+### 3.5 Consultar los favoritos de un usuario
 
-Después de agregar el concierto, vuelve a consultar el perfil:
+Endpoint:
 
-```bash
-curl "http://localhost:8080/api/v1/usuarios/perfil?correo=usuario.prueba@example.com"
+```text
+GET /api/v1/usuarios/{id}/favoritos
 ```
 
-En la propiedad `favoritos` debe aparecer el concierto agregado.
+Comando:
+
+```bash
+curl http://localhost:8080/api/v1/usuarios/1/favoritos
+```
+
+Reemplaza `1` por el `usuarioId` correspondiente.
+
+Respuesta esperada:
+
+```text
+200 OK
+```
+
+La respuesta contiene la lista de conciertos favoritos del usuario.
+
+---
+
+### 3.6 Quitar un concierto de favoritos
+
+Endpoint:
+
+```text
+DELETE /api/v1/usuarios/{id}/favoritos/{conciertoId}
+```
+
+Comando:
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/usuarios/1/favoritos/1
+```
+
+Reemplaza los valores por el `usuarioId` y `conciertoId` correspondientes.
+
+Respuesta esperada:
+
+```text
+204 No Content
+```
+
+Si el concierto no se encuentra entre los favoritos del usuario, se espera:
+
+```text
+404 Not Found
+```
+
+---
+
+### 3.7 Consultar un usuario por ID
+
+Endpoint:
+
+```text
+GET /api/v1/usuarios/{id}
+```
+
+Comando:
+
+```bash
+curl http://localhost:8080/api/v1/usuarios/1
+```
+
+Reemplaza `1` por el ID del usuario.
+
+Respuesta esperada:
+
+```text
+200 OK
+```
+
+La respuesta contiene los datos del usuario.
+
+Si el usuario no existe:
+
+```text
+404 Not Found
+```
+
+---
+
+### 3.8 Actualizar un usuario
+
+Endpoint:
+
+```text
+PUT /api/v1/usuarios/{id}
+```
+
+Comando:
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/usuarios/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Usuario Actualizado",
+    "correo": "usuario.actualizado@example.com"
+  }'
+```
+
+Reemplaza `1` por el ID del usuario que se desea actualizar.
+
+Respuesta esperada:
+
+```text
+200 OK
+```
+
+Si los datos enviados no son válidos:
+
+```text
+400 Bad Request
+```
+
+Si el correo ya pertenece a otro usuario:
+
+```text
+409 Conflict
+```
+
+Si el usuario no existe:
+
+```text
+404 Not Found
+```
+
+---
+
+### 3.9 Eliminar un usuario
+
+Endpoint:
+
+```text
+DELETE /api/v1/usuarios/{id}
+```
+
+Comando:
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/usuarios/1
+```
+
+Reemplaza `1` por el ID del usuario que se desea eliminar.
+
+Respuesta esperada:
+
+```text
+204 No Content
+```
+
+Si el usuario no existe:
+
+```text
+404 Not Found
+```
+
+> Esta operación elimina al usuario, por lo que se recomienda realizarla únicamente al final de las pruebas o utilizando un usuario creado específicamente para probar este endpoint.
 
 ---
 
@@ -225,6 +389,14 @@ con el siguiente valor:
 http://localhost:8080/api/v1
 ```
 
+También utiliza las variables:
+
+```text
+{{usuarioId}}
+{{conciertoId}}
+{{correo}}
+```
+
 ### Flujo recomendado
 
 Ejecutar las solicitudes en este orden:
@@ -233,9 +405,14 @@ Ejecutar las solicitudes en este orden:
 2. **Conciertos → Listar conciertos**
 3. **Usuarios → Consultar perfil**
 4. **Usuarios → Agregar favorito**
-5. **Usuarios → Consultar perfil**
+5. **Usuarios → Obtener favoritos del usuario**
+6. **Usuarios → Quitar favorito**
+7. **Usuarios → Obtener usuario por ID**
+8. **Usuarios → Actualizar usuario**
 
-Para `Agregar favorito`, utiliza un `usuarioId` y un `conciertoId` que existan realmente en la base de datos.
+Para las solicitudes que utilizan `usuarioId` y `conciertoId`, utiliza valores que existan realmente en la base de datos.
+
+El endpoint **Eliminar usuario** se puede probar al final con un usuario destinado específicamente para esta prueba.
 
 ---
 
@@ -281,16 +458,32 @@ Ejemplo para agregar un favorito:
 }
 ```
 
+Ejemplo para actualizar un usuario:
+
+```json
+{
+  "nombre": "Usuario Actualizado",
+  "correo": "usuario.actualizado@example.com"
+}
+```
+
+Para las solicitudes que utilizan IDs en la URL, reemplazar los valores de ejemplo por IDs existentes en la base de datos.
+
 ---
 
 ## 6. Códigos de respuesta esperados
 
-| Endpoint              | Método | Éxito         | Posibles errores                   |
-| --------------------- | ------ | ------------- | ---------------------------------- |
-| `/usuarios/registro`  | POST   | `201 Created` | `400 Bad Request`, `409 Conflict`  |
-| `/conciertos`         | GET    | `200 OK`      | —                                  |
-| `/usuarios/perfil`    | GET    | `200 OK`      | `400 Bad Request`, `404 Not Found` |
-| `/usuarios/favoritos` | POST   | `200 OK`      | `400 Bad Request`, `404 Not Found` |
+| Endpoint                                 | Método | Éxito            | Posibles errores                                   |
+| ---------------------------------------- | ------ | ---------------- | -------------------------------------------------- |
+| `/usuarios/registro`                     | POST   | `201 Created`    | `400 Bad Request`, `409 Conflict`                  |
+| `/conciertos`                            | GET    | `200 OK`         | —                                                  |
+| `/usuarios/perfil`                       | GET    | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
+| `/usuarios/favoritos`                    | POST   | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
+| `/usuarios/{id}`                         | GET    | `200 OK`         | `404 Not Found`                                    |
+| `/usuarios/{id}`                         | PUT    | `200 OK`         | `400 Bad Request`, `404 Not Found`, `409 Conflict` |
+| `/usuarios/{id}`                         | DELETE | `204 No Content` | `404 Not Found`                                    |
+| `/usuarios/{id}/favoritos`               | GET    | `200 OK`         | `404 Not Found`                                    |
+| `/usuarios/{id}/favoritos/{conciertoId}` | DELETE | `204 No Content` | `404 Not Found`                                    |
 
 ### Descripción de los errores
 
@@ -300,16 +493,16 @@ La petición contiene datos faltantes, un formato incorrecto o JSON inválido.
 
 **404 Not Found**
 
-El recurso solicitado no existe, por ejemplo, cuando se consulta un usuario que no está registrado.
+El recurso solicitado no existe, por ejemplo, cuando se consulta un usuario que no está registrado o se intenta eliminar un favorito que no pertenece al usuario.
 
 **409 Conflict**
 
-Se intenta registrar un usuario utilizando un correo que ya está registrado.
+Se intenta registrar o actualizar un usuario utilizando un correo que ya está registrado por otro usuario.
 
 ---
 
 ## 7. Notas
 
-Los endpoints `/usuarios/me/...` definidos en el contrato OpenAPI corresponden a funcionalidades que requieren autenticación y todavía no forman parte de los endpoints actuales utilizados en esta guía.
+Los endpoints `/usuarios/me/...` definidos en el contrato OpenAPI corresponden a funcionalidades que requieren autenticación mediante Bearer token y todavía no forman parte de los endpoints actuales utilizados en esta guía.
 
 La colección de Postman debe actualizarse cuando se integren nuevos CRUDs o endpoints al proyecto.
