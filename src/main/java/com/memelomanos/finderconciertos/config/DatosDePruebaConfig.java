@@ -19,6 +19,10 @@ public class DatosDePruebaConfig {
     @Bean
     CommandLineRunner cargarDatosDePrueba(ConciertoRepository conciertoRepository) {
         return args -> {
+            // Evita duplicar los datos en cada arranque.
+            if (conciertoRepository.count() > 0) {
+                return;
+            }
             conciertoRepository.save(new Concierto(
                     "Queen", LocalDate.of(2026, 11, 20), "CDMX", "Foro Sol"));
             conciertoRepository.save(new Concierto(
