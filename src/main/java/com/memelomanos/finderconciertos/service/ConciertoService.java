@@ -23,10 +23,12 @@ public class ConciertoService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<Concierto> buscarPorArtista(String artista) {
         return buscar(artista, null);
     }
 
+    @Transactional(readOnly = true)
     public List<Concierto> buscar(String artista, String ciudad) {
         String filtroArtista = artista == null ? "" : artista.strip();
         String filtroCiudad = ciudad == null ? "" : ciudad.strip();
@@ -50,6 +52,7 @@ public class ConciertoService {
         return conciertoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Concierto buscarPorId(Long id) {
         return conciertoRepository.findById(id)
                 .orElseThrow(() -> new ConciertoNoEncontradoException(

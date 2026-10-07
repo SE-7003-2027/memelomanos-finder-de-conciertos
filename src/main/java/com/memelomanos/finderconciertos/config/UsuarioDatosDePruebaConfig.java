@@ -16,8 +16,13 @@ public class UsuarioDatosDePruebaConfig {
     @Bean
     CommandLineRunner cargarUsuariosDePrueba(UsuarioRepository usuarioRepository) {
         return args -> {
-            usuarioRepository.save(new Usuario("Marilu Putowsky", "flanconsalsa67@gmail.com"));
-            usuarioRepository.save(new Usuario("Eduardo Jimenez", "pollosasados99@gmail.com"));
+            // Evita duplicar los usuarios en cada arranque.
+            if (!usuarioRepository.existsByCorreo("flanconsalsa67@gmail.com")) {
+                usuarioRepository.save(new Usuario("Marilu Putowsky", "flanconsalsa67@gmail.com"));
+            }
+            if (!usuarioRepository.existsByCorreo("pollosasados99@gmail.com")) {
+                usuarioRepository.save(new Usuario("Eduardo Jimenez", "pollosasados99@gmail.com"));
+            }
         };
     }
 }

@@ -52,14 +52,14 @@ http://localhost:8080/swagger-ui/index.html
 
 Al arrancar, la aplicación carga datos de prueba: 3 conciertos (Queen, Bad Bunny y Queen tribute band) y 2 usuarios. Por eso, en una base limpia los IDs `1`, `2` y `3` de conciertos y los IDs `1` y `2` de usuarios ya están ocupados: el primer usuario que registres tendrá el `id` `3`, no `1`.
 
-Estos datos se vuelven a insertar en **cada arranque**, así que si reinicias la aplicación con la misma base verás registros repetidos. Para empezar desde cero con la base de Docker:
+Estos datos solo se insertan si no existen (los conciertos, si la tabla está vacía; los usuarios, si su correo no está registrado), así que reiniciar la aplicación con la misma base no los duplica. Si quieres empezar desde cero con la base de Docker:
 
 ```bash
 docker compose down -v
 docker compose up -d
 ```
 
-> Si después de varios reinicios `GET /usuarios/perfil` responde `500 Internal Server Error` con un correo de prueba, probablemente se debe a esos registros repetidos (el correo no tiene una restricción de unicidad en la base de datos). Reinicia la base con los comandos anteriores.
+> Si tu base se creó con una versión anterior y tiene usuarios con el mismo correo repetido, la aplicación puede fallar al arrancar (la columna `correo` ahora es única) o `GET /usuarios/perfil` puede responder `500`. Reinicia la base con los comandos anteriores.
 
 ---
 
