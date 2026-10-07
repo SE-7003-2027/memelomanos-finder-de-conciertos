@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.controller;
 
+import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.FavoritoRequest;
 import com.memelomanos.finderconciertos.model.RegistroRequest;
 import com.memelomanos.finderconciertos.model.Usuario;
@@ -7,18 +8,10 @@ import com.memelomanos.finderconciertos.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * Expone los endpoints para el registro, consulta de perfil, y
- * favoritos de usuario. El controller solo recibe la peticion y
- * llama al service. Todas las rutas quedan bajo /api/v1 (ver WebConfig).
- */
+import java.util.List;
+
 @RestController
 public class UsuarioController {
 
@@ -29,11 +22,11 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    // 201 Created porque se crea un recurso nuevo (asi lo dice el contrato).
     @PostMapping("/usuarios/registro")
     @ResponseStatus(HttpStatus.CREATED)
     public Usuario registrarUsuario(@Valid @RequestBody RegistroRequest request) {
-        return usuarioService.registrarUsuario(request.getNombre(), request.getCorreo());
+        return usuarioService.registrarUsuario(
+                request.getNombre(), request.getCorreo());
     }
 
     @GetMapping("/usuarios/perfil")
@@ -41,15 +34,42 @@ public class UsuarioController {
         return usuarioService.buscarPerfilPorCorreo(correo);
     }
 
-    /**
-     * Agrega un concierto a los favoritos del usuario.
-     * este endpoint identifica al usuario con usuarioId en el
-     * body porque todavia no hay autenticacion. Cuando se implemente
-     * login, esto deberia cambiar a identificar al usuario por su
-     * token en vez de recibir el id explicitamente.
-     */
     @PostMapping("/usuarios/favoritos")
     public Usuario agregarFavorito(@Valid @RequestBody FavoritoRequest request) {
-        return usuarioService.agregarFavorito(request.getUsuarioId(), request.getConciertoId());
+        return usuarioService.agregarFavorito(
+                request.getUsuarioId(), request.getConciertoId());
+    }
+
+    @GetMapping("/usuarios/{id}")
+    public Usuario obtenerUsuario(@PathVariable Long id) {
+        return usuarioService.buscarUsuarioPorId(id);
+    }
+
+    @PutMapping("/usuarios/{id}")
+    public Usuario actualizarUsuario(
+            @PathVariable Long id,
+            @Valid @RequestBody RegistroRequest request) {
+        return usuarioService.actualizarUsuario(
+                id, request.getNombre(), request.getCorreo());
+    }
+
+    @DeleteMapping("/usuarios/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminarUsuario(@PathVariable Long id) {
+        usuarioService.eliminarUsuario(id);
+    }
+
+    @GetMapping("/usuarios/{id}/favoritos")
+    public List<Concierto> obtenerFavoritos(@PathVariable Long id) {
+        return usuarioService.obtenerFavoritos(id);
+    }
+
+    @DeleteMapping("/usuarios/{id}/favoritos/{conciertoId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void quitarFavorito(
+            @PathVariable Long id,
+            @PathVariable Long conciertoId) {
+        usuarioService.quitarFavorito(id, conciertoId);
     }
 }
+
