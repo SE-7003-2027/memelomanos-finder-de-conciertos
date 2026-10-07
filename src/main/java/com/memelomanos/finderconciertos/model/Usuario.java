@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,6 +23,7 @@ public class Usuario {
     private Long id;
 
     private String nombre;
+    @Column(unique = true)
     private String correo;
 
     @ManyToMany
@@ -64,6 +66,6 @@ public class Usuario {
     }
 
     public void quitarFavorito(Concierto concierto) {
-    favoritos.remove(concierto);
-}
+        favoritos.remove(concierto);
+    }
 }

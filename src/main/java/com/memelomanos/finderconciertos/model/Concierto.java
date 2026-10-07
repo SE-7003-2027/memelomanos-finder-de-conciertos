@@ -5,7 +5,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
-import java.util.Objects;
 
 // Entidad que representa un concierto. Por ahora solo tiene los
 // campos basicos que definimos en el PRD (artista, fecha, ciudad,
@@ -81,15 +80,16 @@ public class Concierto {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof Concierto concierto)) {
             return false;
         }
-        Concierto concierto = (Concierto) o;
-        return id != null && id.equals(concierto.id);
+        return id != null && id.equals(concierto.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        // Constante a proposito: el id es null antes de guardar y cambia
+        // despues, asi el hash no cambia mientras el objeto esta en un Set.
+        return Concierto.class.hashCode();
     }
 }
