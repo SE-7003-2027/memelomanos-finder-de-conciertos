@@ -141,6 +141,16 @@ en Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+## Pruebas de la API
+
+La guía completa para probar la API con `curl`, Postman e Insomnia se encuentra en:
+
+- `docs/pruebas-api.md`
+
+La colección de Postman se encuentra en:
+
+- `docs/postman/finder-conciertos.postman_collection.json`
+
 ## Documentación adicional
 
 - Guía de estilo: `docs/guia-de-estilo.md`
