@@ -29,12 +29,12 @@ Funcionalidades comprometidas por el equipo para el sprint actual:
 - [x] Visualización de la información básica de un concierto (artista, fecha, ciudad o lugar)
 - [x] Lista de conciertos disponibles
 - [x] Creación y consulta de un perfil de usuario
-- [ ] Marcar conciertos de interés para el usuario
+- [x] Marcar conciertos de interés para el usuario
 
 ## Stack
 
 - Backend: Java 21 + Spring Boot (API), Maven
-- Interfaz: en evaluación — el equipo está comparando Java Swing (app de escritorio), Thymeleaf (renderizado en el servidor) y un frontend desacoplado (React/Vue/Angular) — ver ADR-002 para el detalle de cada opción
+- Interfaz: aplicación web (SPA) con Vue 3 + Vite que consume la API REST — decisión tomada en el ADR-002 (todavía por construir)
 - Base de datos: PostgreSQL
 
 # Cómo ejecutar el proyecto desde cero
