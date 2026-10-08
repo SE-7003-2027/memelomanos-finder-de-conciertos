@@ -143,6 +143,7 @@ http://localhost:8080/swagger-ui/index.html
 
 ## Pruebas de la API
 
+### Pruebas manuales
 La guía completa para probar la API con `curl`, Postman e Insomnia se encuentra en:
 
 - `docs/pruebas-api.md`
@@ -150,6 +151,11 @@ La guía completa para probar la API con `curl`, Postman e Insomnia se encuentra
 La colección de Postman se encuentra en:
 
 - `docs/postman/finder-conciertos.postman_collection.json`
+
+### Pruebas automatizadas
+Para ejecutar los tests solo hay que ejecutar el comando:
+`mvn test`
+Esto automaticamente generará un reporte, no es malo que salga un "Build error", esto es normal si los tests no pasan al 100%
 
 ## Documentación adicional
 
