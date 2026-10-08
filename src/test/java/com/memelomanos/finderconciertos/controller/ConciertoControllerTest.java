@@ -1,5 +1,7 @@
 package com.memelomanos.finderconciertos.controller;
 
+import org.junit.jupiter.api.DisplayName;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.ConciertoRequest;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ConciertoController.class)
+@DisplayName("Controlador de Conciertos (Capa Web)")
 public class ConciertoControllerTest {
 
     @Autowired
@@ -44,7 +47,7 @@ public class ConciertoControllerTest {
     void buscar_DebeRetornarOk() throws Exception {
         when(conciertoService.buscar(null, null)).thenReturn(List.of(conciertoMock));
 
-        mockMvc.perform(get("/conciertos"))
+        mockMvc.perform(get("/api/v1/conciertos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].artista").value("Coldplay"));
     }
@@ -53,7 +56,7 @@ public class ConciertoControllerTest {
     void buscarPorId_DebeRetornarOk() throws Exception {
         when(conciertoService.buscarPorId(1L)).thenReturn(conciertoMock);
 
-        mockMvc.perform(get("/conciertos/1"))
+        mockMvc.perform(get("/api/v1/conciertos/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.artista").value("Coldplay"));
     }
@@ -62,7 +65,7 @@ public class ConciertoControllerTest {
     void eliminar_DebeRetornarNoContent() throws Exception {
         doNothing().when(conciertoService).eliminar(1L);
 
-        mockMvc.perform(delete("/conciertos/1"))
+        mockMvc.perform(delete("/api/v1/conciertos/1"))
                 .andExpect(status().isNoContent());
 
         verify(conciertoService, times(1)).eliminar(1L);

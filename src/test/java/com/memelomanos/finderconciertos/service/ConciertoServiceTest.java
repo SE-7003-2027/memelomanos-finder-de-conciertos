@@ -1,5 +1,7 @@
 package com.memelomanos.finderconciertos.service;
 
+import org.junit.jupiter.api.DisplayName;
+
 import com.memelomanos.finderconciertos.exception.ConciertoNoEncontradoException;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.ConciertoRequest;
@@ -20,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Servicio de Conciertos (Lógica de Negocio)")
 public class ConciertoServiceTest {
 
     @Mock

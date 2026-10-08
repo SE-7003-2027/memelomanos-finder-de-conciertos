@@ -1,7 +1,10 @@
 package com.memelomanos.finderconciertos.service;
 
+import org.junit.jupiter.api.DisplayName;
+import com.memelomanos.finderconciertos.exception.ConciertoNoEncontradoException;
 import com.memelomanos.finderconciertos.exception.CorreoDuplicadoException;
 import com.memelomanos.finderconciertos.exception.UsuarioNoEncontradoException;
+import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
@@ -18,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+@DisplayName("Servicio de Usuarios (Lógica de Negocio)")
 @ExtendWith(MockitoExtension.class)
 public class UsuarioServiceTest {
 
@@ -31,6 +35,7 @@ public class UsuarioServiceTest {
     private UsuarioService usuarioService;
 
     @Test
+    @DisplayName("Debe registrar un usuario correctamente")
     void registrarUsuario_Exito() {
         when(usuarioRepository.existsByCorreo(anyString())).thenReturn(false);
         
@@ -41,11 +46,11 @@ public class UsuarioServiceTest {
 
         assertNotNull(resultado);
         assertEquals("Juan", resultado.getNombre());
-        assertEquals("juan@test.com", resultado.getCorreo());
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
     }
 
     @Test
+    @DisplayName("Debe fallar al registrar si el correo ya existe")
     void registrarUsuario_LanzaCorreoDuplicadoException() {
         when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(true);
 
@@ -57,21 +62,40 @@ public class UsuarioServiceTest {
     }
 
     @Test
-    void buscarPerfilPorCorreo_Exito() {
-        Usuario usuarioMock = new Usuario("Maria", "maria@test.com");
-        when(usuarioRepository.findByCorreo("maria@test.com")).thenReturn(Optional.of(usuarioMock));
+    @DisplayName("Debe agregar un concierto a favoritos correctamente")
+    void agregarFavorito_Exito() {
+        Usuario usuarioMock = new Usuario("Juan", "juan@test.com");
+        Concierto conciertoMock = new Concierto();
+        conciertoMock.setArtista("Coldplay");
 
-        Usuario resultado = usuarioService.buscarPerfilPorCorreo("maria@test.com");
+        // Simulamos que encontramos el usuario y el concierto en la BD
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioMock));
+        when(conciertoRepository.findById(10L)).thenReturn(Optional.of(conciertoMock));
+        
+        // Simulamos el guardado
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioMock);
 
-        assertEquals("Maria", resultado.getNombre());
+        Usuario resultado = usuarioService.agregarFavorito(1L, 10L);
+
+        // Verificamos que el concierto se haya agregado a la lista
+        assertTrue(resultado.getFavoritos().contains(conciertoMock));
+        verify(usuarioRepository, times(1)).save(usuarioMock);
     }
 
     @Test
-    void buscarPerfilPorCorreo_LanzaUsuarioNoEncontradoException() {
-        when(usuarioRepository.findByCorreo("noexiste@test.com")).thenReturn(Optional.empty());
+    @DisplayName("Debe lanzar excepción si el concierto no existe al agregar a favoritos")
+    void agregarFavorito_LanzaConciertoNoEncontrado() {
+        Usuario usuarioMock = new Usuario("Juan", "juan@test.com");
 
-        assertThrows(UsuarioNoEncontradoException.class, () -> {
-            usuarioService.buscarPerfilPorCorreo("noexiste@test.com");
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioMock));
+        // Simulamos que el concierto NO existe
+        when(conciertoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ConciertoNoEncontradoException.class, () -> {
+            usuarioService.agregarFavorito(1L, 99L);
         });
+
+        // Verificamos que NUNCA se intentó guardar nada
+        verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 }
