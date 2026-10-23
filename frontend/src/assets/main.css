@@ -1,0 +1,188 @@
+/* Estilos globales minimos. Cuando se cierre #49 se pueden mover o
+   reemplazar por los estilos que defina el equipo. */
+:root {
+  --color-fondo: #f6f5f9;
+  --color-superficie: #ffffff;
+  --color-texto: #1d1b2a;
+  --color-suave: #625f76;
+  --color-borde: #dedbe8;
+  --color-acento: #3a3fd1;
+  --color-acento-suave: #e7e8fb;
+  --color-error: #b3261e;
+  --color-error-fondo: #fbe5e3;
+  --color-exito: #2f6f4e;
+  --color-exito-fondo: #e3f2e9;
+  --radio: 10px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-fondo: #13121b;
+    --color-superficie: #1d1c28;
+    --color-texto: #ecebf3;
+    --color-suave: #a3a0b8;
+    --color-borde: #33313f;
+    --color-acento: #9ea2ff;
+    --color-acento-suave: #272a52;
+    --color-error: #ff9b92;
+    --color-error-fondo: #3d1f1d;
+    --color-exito: #7fd1a3;
+    --color-exito-fondo: #1b3328;
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  margin: 0;
+}
+
+a {
+  color: var(--color-acento);
+}
+
+.contenedor {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tarjeta {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 20px;
+}
+
+.texto-suave {
+  color: var(--color-suave);
+}
+
+/* Formularios */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.campo input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+}
+
+.campo input:focus {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 1px;
+}
+
+.campo input[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.campo .error-campo {
+  color: var(--color-error);
+  font-size: 14px;
+}
+
+/* Botones */
+.boton {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--color-borde);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  border-radius: 8px;
+  padding: 9px 16px;
+}
+
+.boton:hover:not(:disabled) {
+  border-color: var(--color-acento);
+  color: var(--color-acento);
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boton:focus-visible {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 2px;
+}
+
+.boton-primario {
+  background: var(--color-acento);
+  border-color: var(--color-acento);
+  color: var(--color-superficie);
+}
+
+.boton-primario:hover:not(:disabled) {
+  color: var(--color-superficie);
+  opacity: 0.9;
+}
+
+.boton-peligro,
+.boton-peligro:hover:not(:disabled) {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Avisos */
+.aviso {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 15px;
+}
+
+.aviso-error {
+  background: var(--color-error-fondo);
+  color: var(--color-error);
+}
+
+.aviso-exito {
+  background: var(--color-exito-fondo);
+  color: var(--color-exito);
+}
