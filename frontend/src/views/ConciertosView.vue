@@ -1,9 +1,8 @@
 <script setup>
-// TEMPORAL: lista sencilla de conciertos solo para poder probar el boton de
-// favoritos de #52. La vista real de busqueda, lista y detalle es la de #50;
-// cuando se haga merge de esa, este archivo se reemplaza y solo hay que
-// poner <BotonFavorito :concierto="concierto" /> en su tarjeta.
+// Lista provisional para comprobar favoritos y navegacion.
+// La busqueda y el detalle completo se implementan en #50.
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { buscarConciertos } from '@/api/conciertos'
 import BotonFavorito from '@/components/BotonFavorito.vue'
 import { formatearFecha } from '@/utils/fechas'
@@ -29,12 +28,21 @@ onMounted(async () => {
     <p v-if="cargando" class="texto-suave">Cargando conciertos…</p>
     <p v-else-if="error" class="aviso aviso-error" role="alert">{{ error }}</p>
     <p v-else-if="!conciertos.length" class="texto-suave">Todavía no hay conciertos.</p>
+
     <ul v-else class="lista">
       <li v-for="concierto in conciertos" :key="concierto.id" class="tarjeta concierto">
         <div>
           <h2>{{ concierto.artista }}</h2>
-          <p class="texto-suave">{{ formatearFecha(concierto.fecha) }} · {{ concierto.lugar }}, {{ concierto.ciudad }}</p>
+          <p class="texto-suave">
+            {{ formatearFecha(concierto.fecha) }} · {{ concierto.lugar }}, {{ concierto.ciudad }}
+          </p>
+          <RouterLink
+            :to="{ name: 'concierto-detalle', params: { id: concierto.id } }"
+          >
+            Ver detalle
+          </RouterLink>
         </div>
+
         <BotonFavorito :concierto="concierto" />
       </li>
     </ul>
