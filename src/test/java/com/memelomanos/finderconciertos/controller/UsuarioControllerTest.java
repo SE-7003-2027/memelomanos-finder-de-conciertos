@@ -101,6 +101,16 @@ public class UsuarioControllerTest {
     }
 
     @Test
+    @DisplayName("Debe retornar 400 si el correo del perfil es inválido")
+    void obtenerPerfil_CorreoInvalido_RetornaBadRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/usuarios/perfil")
+                .param("correo", "esto-no-es-correo"))
+                .andExpect(status().isBadRequest());
+
+        verify(usuarioService, never()).buscarPerfilPorCorreo(anyString());
+    }
+
+    @Test
     @DisplayName("Debe retornar 400 Bad Request si faltan datos obligatorios (ej. Nombre)")
     void registrarUsuario_FaltaNombre_RetornaBadRequest() throws Exception {
         RegistroRequest request = new RegistroRequest();
