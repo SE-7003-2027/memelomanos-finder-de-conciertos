@@ -3,15 +3,21 @@ package com.memelomanos.finderconciertos.controller;
 import org.junit.jupiter.api.DisplayName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memelomanos.finderconciertos.model.FavoritoRequest;
+import com.memelomanos.finderconciertos.model.LoginRequest;
+import com.memelomanos.finderconciertos.model.LoginResponse;
 import com.memelomanos.finderconciertos.model.RegistroRequest;
 import com.memelomanos.finderconciertos.model.Usuario;
+import com.memelomanos.finderconciertos.security.ConfiguracionSeguridad;
+import com.memelomanos.finderconciertos.security.JwtService;
 import com.memelomanos.finderconciertos.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -22,6 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DisplayName("Controlador de Usuarios (Capa Web)")
 @WebMvcTest(UsuarioController.class)
+@Import(ConfiguracionSeguridad.class)
+@WithMockUser
 public class UsuarioControllerTest {
 
     @Autowired
@@ -29,6 +37,9 @@ public class UsuarioControllerTest {
 
     @MockBean
     private UsuarioService usuarioService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -46,8 +57,9 @@ public class UsuarioControllerTest {
         RegistroRequest request = new RegistroRequest();
         request.setNombre("Test User");
         request.setCorreo("test@correo.com");
+        request.setPassword("password123");
 
-        when(usuarioService.registrarUsuario(anyString(), anyString())).thenReturn(usuarioMock);
+        when(usuarioService.registrarUsuario(anyString(), anyString(), anyString())).thenReturn(usuarioMock);
 
         mockMvc.perform(post("/api/v1/usuarios/registro")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -55,6 +67,20 @@ public class UsuarioControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nombre").value("Test User"))
                 .andExpect(jsonPath("$.correo").value("test@correo.com"));
+    }
+
+    @Test
+    @DisplayName("Debe retornar 200 OK y token al hacer login")
+    void login_DebeRetornarOkYToken() throws Exception {
+        LoginRequest request = new LoginRequest("test@correo.com", "password123");
+        when(usuarioService.login("test@correo.com", "password123"))
+                .thenReturn(new LoginResponse("dummy-jwt-token"));
+
+        mockMvc.perform(post("/api/v1/usuarios/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("dummy-jwt-token"));
     }
 
     @Test
@@ -89,15 +115,15 @@ public class UsuarioControllerTest {
     void registrarUsuario_CorreoInvalido_RetornaBadRequest() throws Exception {
         RegistroRequest request = new RegistroRequest();
         request.setNombre("Juan Perez");
-        request.setCorreo("correo fake 1234"); // Esto violará la etiqueta @Email del modelo
+        request.setCorreo("correo fake 1234");
+        request.setPassword("password123");
 
         mockMvc.perform(post("/api/v1/usuarios/registro")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest()); // Esperamos un 400
+                .andExpect(status().isBadRequest());
 
-        // Comprobamos que Spring detuvo la petición y NUNCA llegó al servicio
-        verify(usuarioService, never()).registrarUsuario(anyString(), anyString());
+        verify(usuarioService, never()).registrarUsuario(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -114,15 +140,31 @@ public class UsuarioControllerTest {
     @DisplayName("Debe retornar 400 Bad Request si faltan datos obligatorios (ej. Nombre)")
     void registrarUsuario_FaltaNombre_RetornaBadRequest() throws Exception {
         RegistroRequest request = new RegistroRequest();
-        request.setNombre(""); // Esto violará la etiqueta @NotBlank
+        request.setNombre("");
         request.setCorreo("juan@correo.com");
+        request.setPassword("password123");
 
         mockMvc.perform(post("/api/v1/usuarios/registro")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest()); // Esperamos un 400
+                .andExpect(status().isBadRequest());
 
-        // Comprobamos que Spring detuvo la petición y NUNCA llegó al servicio
-        verify(usuarioService, never()).registrarUsuario(anyString(), anyString());
+        verify(usuarioService, never()).registrarUsuario(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Debe retornar 400 Bad Request si la contraseña tiene menos de 8 caracteres")
+    void registrarUsuario_PasswordCorta_RetornaBadRequest() throws Exception {
+        RegistroRequest request = new RegistroRequest();
+        request.setNombre("Juan Perez");
+        request.setCorreo("juan@correo.com");
+        request.setPassword("123");
+
+        mockMvc.perform(post("/api/v1/usuarios/registro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verify(usuarioService, never()).registrarUsuario(anyString(), anyString(), anyString());
     }
 }

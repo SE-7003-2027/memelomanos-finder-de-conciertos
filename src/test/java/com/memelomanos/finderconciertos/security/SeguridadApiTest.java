@@ -2,30 +2,35 @@ package com.memelomanos.finderconciertos.security;
 
 import com.memelomanos.finderconciertos.controller.UsuarioController;
 import com.memelomanos.finderconciertos.controller.ConciertoController;
+import com.memelomanos.finderconciertos.model.LoginResponse;
+import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
 import com.memelomanos.finderconciertos.service.ConciertoService;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// TODO: Cuando se agregue Spring Security, descomentar estos imports:
-// import org.springframework.security.test.context.support.WithMockUser;
-// import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-
 @WebMvcTest({UsuarioController.class, ConciertoController.class})
+@Import({ConfiguracionSeguridad.class, JwtAuthenticationFilter.class, JwtService.class})
 @DisplayName("Seguridad y Permisos (Integraciones OAuth2)")
 public class SeguridadApiTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private JwtService jwtService;
 
     @MockBean
     private UsuarioService usuarioService;
@@ -43,34 +48,40 @@ public class SeguridadApiTest {
     @Test
     @DisplayName("El registro de usuarios debe ser público (No 401)")
     void registro_EsPublico() throws Exception {
+        Usuario usuarioMock = new Usuario("Test", "test@test.com");
+        when(usuarioService.registrarUsuario(anyString(), anyString(), anyString())).thenReturn(usuarioMock);
+
         mockMvc.perform(post("/api/v1/usuarios/registro")
-               .contentType("application/json")
-               .content("{\"nombre\":\"Test\",\"correo\":\"test@test.com\"}"))
+               .contentType(MediaType.APPLICATION_JSON)
+               .content("{\"nombre\":\"Test\",\"correo\":\"test@test.com\",\"password\":\"password123\"}"))
                .andExpect(status().isCreated());
     }
 
-    /* TODO: DESCOMENTAR CUANDO TENGAS SPRING SECURITY Y LAS DEPENDENCIAS DE TESTING*/
-    // Nota: esta parte está comentada porque al no tener integrado Spring Security va a chicotear
-    /*
     @Test
-    @WithMockUser(roles = "USER")
-    @DisplayName("Usuario con rol básico no puede borrar conciertos (403 Forbidden)")
-    void usuarioNormal_NoPuedeBorrarConciertos() throws Exception {
-        // Asumiendo que solo administradores pueden borrar conciertos del sistema
-        mockMvc.perform(delete("/api/v1/conciertos/10"))
-               .andExpect(status().isForbidden());
-    }
-    */
+    @DisplayName("El login de usuarios debe ser público (No 401 por falta de token)")
+    void login_EsPublico() throws Exception {
+        when(usuarioService.login(anyString(), anyString())).thenReturn(new LoginResponse("token123"));
 
-    /*
-    @Test
-    @DisplayName("Debe autenticarse correctamente usando un Token JWT (Ej: Spotify / Google APIs)")
-    void simulacion_LoginConJwtToken() throws Exception {
-        // Al conectar con Spotify o Google, tu frontend te mandará un Token JWT (Bearer Token).
-        // Así simulamos que la petición HTTP trae un token válido:
-        mockMvc.perform(get("/api/v1/usuarios/1/favoritos")
-               .with(jwt().jwt(builder -> builder.claim("email", "usuario@gmail.com"))))
+        mockMvc.perform(post("/api/v1/usuarios/login")
+               .contentType(MediaType.APPLICATION_JSON)
+               .content("{\"correo\":\"test@test.com\",\"password\":\"password123\"}"))
                .andExpect(status().isOk());
     }
-    */
+
+    @Test
+    @DisplayName("La consulta de conciertos debe ser pública (GET /conciertos)")
+    void conciertos_EsPublico() throws Exception {
+        mockMvc.perform(get("/api/v1/conciertos"))
+               .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Debe autenticarse correctamente usando un Token JWT real en cabecera Authorization")
+    void simulacion_LoginConJwtToken() throws Exception {
+        String tokenValido = jwtService.generarToken("usuario@gmail.com", 1L);
+
+        mockMvc.perform(get("/api/v1/usuarios/1/favoritos")
+               .header("Authorization", "Bearer " + tokenValido))
+               .andExpect(status().isOk());
+    }
 }

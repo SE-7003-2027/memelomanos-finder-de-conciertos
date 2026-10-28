@@ -2,6 +2,8 @@ package com.memelomanos.finderconciertos.controller;
 
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.FavoritoRequest;
+import com.memelomanos.finderconciertos.model.LoginRequest;
+import com.memelomanos.finderconciertos.model.LoginResponse;
 import com.memelomanos.finderconciertos.model.RegistroRequest;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
@@ -29,7 +31,12 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.CREATED)
     public Usuario registrarUsuario(@Valid @RequestBody RegistroRequest request) {
         return usuarioService.registrarUsuario(
-                request.getNombre(), request.getCorreo());
+                request.getNombre(), request.getCorreo(), request.getPassword());
+    }
+
+    @PostMapping("/usuarios/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return usuarioService.login(request.getCorreo(), request.getPassword());
     }
 
     @GetMapping("/usuarios/perfil")
@@ -78,4 +85,3 @@ public class UsuarioController {
         usuarioService.quitarFavorito(id, conciertoId);
     }
 }
-

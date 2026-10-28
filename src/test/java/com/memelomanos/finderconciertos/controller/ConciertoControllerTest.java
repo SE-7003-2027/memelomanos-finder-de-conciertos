@@ -4,24 +4,27 @@ import org.junit.jupiter.api.DisplayName;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memelomanos.finderconciertos.model.Concierto;
-import com.memelomanos.finderconciertos.model.ConciertoRequest;
+import com.memelomanos.finderconciertos.security.ConfiguracionSeguridad;
+import com.memelomanos.finderconciertos.security.JwtService;
 import com.memelomanos.finderconciertos.service.ConciertoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ConciertoController.class)
+@Import(ConfiguracionSeguridad.class)
+@WithMockUser
 @DisplayName("Controlador de Conciertos (Capa Web)")
 public class ConciertoControllerTest {
 
@@ -30,6 +33,9 @@ public class ConciertoControllerTest {
 
     @MockBean
     private ConciertoService conciertoService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Autowired
     private ObjectMapper objectMapper;

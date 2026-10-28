@@ -44,6 +44,8 @@ paths:
 
     post:
       summary: Crear un concierto
+      security:
+        - bearerAuth: []
       tags:
         - Conciertos
       requestBody:
@@ -61,6 +63,8 @@ paths:
                 $ref: '#/components/schemas/Concierto'
         '400':
           $ref: '#/components/responses/PeticionInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
 
   /conciertos/{id}:
     parameters:
@@ -89,6 +93,8 @@ paths:
     put:
       summary: Actualizar un concierto por ID
       description: Reemplaza todos los datos editables del concierto.
+      security:
+        - bearerAuth: []
       tags:
         - Conciertos
       requestBody:
@@ -106,6 +112,8 @@ paths:
                 $ref: '#/components/schemas/Concierto'
         '400':
           $ref: '#/components/responses/PeticionInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -115,11 +123,15 @@ paths:
         Quita el concierto de los favoritos de todos los usuarios
         que lo tengan guardado y luego lo elimina.
         Las dos operaciones se realizan en una misma transaccion.
+      security:
+        - bearerAuth: []
       tags:
         - Conciertos
       responses:
         '204':
           description: Concierto eliminado exitosamente. Sin contenido.
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -139,12 +151,17 @@ paths:
               required:
                 - nombre
                 - correo
+                - password
               properties:
                 nombre:
                   type: string
                 correo:
                   type: string
                   format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
       responses:
         '201':
           description: Usuario creado exitosamente
@@ -161,10 +178,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /usuarios/login:
+    post:
+      summary: Iniciar sesión
+      description: Autentica al usuario con correo y contraseña, y devuelve un token JWT.
+      tags:
+        - Usuarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - correo
+                - password
+              properties:
+                correo:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Inicio de sesión exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Token JWT para autenticarse en los endpoints protegidos
+        '400':
+          $ref: '#/components/responses/PeticionInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+
   /usuarios/perfil:
     get:
       summary: Obtener perfil del usuario
       description: Devuelve los datos de un usuario a partir de su correo.
+      security:
+        - bearerAuth: []
       tags:
         - Usuarios
       parameters:
@@ -184,6 +241,8 @@ paths:
                 $ref: '#/components/schemas/Usuario'
         '400':
           $ref: '#/components/responses/PeticionInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -192,10 +251,9 @@ paths:
       summary: Marcar un concierto como favorito
       description: >
         Añade un concierto a la lista de favoritos de un usuario.
-        Version temporal sin autenticacion: recibe usuarioId
-        explicitamente en el body. Cuando se implemente login, este
-        endpoint debera cambiar a /usuarios/me/favoritos identificando
-        al usuario por su token.
+        Recibe usuarioId explicitamente en el body y requiere token JWT.
+      security:
+        - bearerAuth: []
       tags:
         - Usuarios
       requestBody:
@@ -223,6 +281,8 @@ paths:
                 $ref: '#/components/schemas/Usuario'
         '400':
           $ref: '#/components/responses/PeticionInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -231,6 +291,8 @@ paths:
     get:
       summary: Obtener usuario por ID
       description: Devuelve los datos de un usuario a partir de su ID.
+      security:
+        - bearerAuth: []
       tags:
         - Usuarios
       parameters:
@@ -248,12 +310,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Usuario'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
     put:
       summary: Actualizar usuario
       description: Actualiza el nombre y correo de un usuario.
+      security:
+        - bearerAuth: []
       tags:
         - Usuarios
       parameters:
@@ -273,12 +339,17 @@ paths:
               required:
                 - nombre
                 - correo
+                - password
               properties:
                 nombre:
                   type: string
                 correo:
                   type: string
                   format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
       responses:
         '200':
           description: Usuario actualizado exitosamente
@@ -288,6 +359,8 @@ paths:
                 $ref: '#/components/schemas/Usuario'
         '400':
           $ref: '#/components/responses/PeticionInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -300,6 +373,8 @@ paths:
     delete:
       summary: Eliminar usuario
       description: Elimina un usuario a partir de su ID.
+      security:
+        - bearerAuth: []
       tags:
         - Usuarios
       parameters:
@@ -313,6 +388,8 @@ paths:
       responses:
         '204':
           description: Usuario eliminado exitosamente
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -320,6 +397,8 @@ paths:
     get:
       summary: Obtener favoritos de un usuario
       description: Devuelve la lista de conciertos favoritos del usuario.
+      security:
+        - bearerAuth: []
       tags:
         - Usuarios
       parameters:
@@ -339,6 +418,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Concierto'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -346,6 +427,8 @@ paths:
     delete:
       summary: Quitar concierto de favoritos
       description: Elimina un concierto de la lista de favoritos del usuario.
+      security:
+        - bearerAuth: []
       tags:
         - Usuarios
       parameters:
@@ -366,6 +449,8 @@ paths:
       responses:
         '204':
           description: Concierto eliminado de favoritos exitosamente
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
         '404':
           description: Usuario o favorito no encontrado
           content:
