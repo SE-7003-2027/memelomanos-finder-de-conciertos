@@ -27,9 +27,9 @@ el mismo PR.
 
 | Funcionalidad | API | Interfaz |
 | ------------- | :-: | :------: |
-| Lista de conciertos | ✅ | Versión temporal (la reemplaza #50) |
-| Detalle de un concierto | ✅ | En curso (#50) |
-| Búsqueda de conciertos por artista y ciudad | ✅ | En curso (#50) |
+| Lista de conciertos | ✅ | ✅ |
+| Detalle de un concierto | ✅ | ✅ |
+| Búsqueda de conciertos por artista y ciudad | ✅ | ✅ |
 | Búsqueda de conciertos por fecha | En curso (#53) | — |
 | Alta, edición y baja de conciertos | ✅ | — |
 | Registro, consulta, edición y baja de perfil | ✅ | ✅ |
