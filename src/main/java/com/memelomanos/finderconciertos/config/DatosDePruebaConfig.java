@@ -5,6 +5,8 @@ import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+
 import java.time.LocalDate;
 
 /**
@@ -14,6 +16,7 @@ import java.time.LocalDate;
  * se puede borrar esta clase.
  */
 @Configuration
+@Profile("dev")
 public class DatosDePruebaConfig {
 
     @Bean
@@ -23,6 +26,7 @@ public class DatosDePruebaConfig {
             if (conciertoRepository.count() > 0) {
                 return;
             }
+
             conciertoRepository.save(new Concierto(
                     "Queen", LocalDate.of(2026, 11, 20), "CDMX", "Foro Sol"));
             conciertoRepository.save(new Concierto(
