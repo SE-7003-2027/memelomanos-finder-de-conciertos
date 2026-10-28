@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 
@@ -58,6 +59,23 @@ public class ManejadorGlobalDeExcepciones {
                 .collect(Collectors.joining(", "));
 
         return construir(HttpStatus.BAD_REQUEST, detalle);
+    }
+
+    // Rango de fechas incorrecto
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorRespuesta> manejarArgumentoInvalido(
+            IllegalArgumentException ex) {
+        return construir(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // Parámetro con formato o tipo incorrecto, como una fechas invalidas
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorRespuesta> manejarTipoParametroIncorrecto(
+            MethodArgumentTypeMismatchException ex) {
+        return construir(
+                HttpStatus.BAD_REQUEST,
+                "El parámetro '" + ex.getName()
+                        + "' debe ser una fecha válida con formato YYYY-MM-DD");
     }
 
     private ResponseEntity<ErrorRespuesta> construir(HttpStatus status, String mensaje) {

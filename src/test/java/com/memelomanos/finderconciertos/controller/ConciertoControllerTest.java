@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.time.LocalDate;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -51,7 +52,8 @@ public class ConciertoControllerTest {
 
     @Test
     void buscar_DebeRetornarOk() throws Exception {
-        when(conciertoService.buscar(null, null)).thenReturn(List.of(conciertoMock));
+        when(conciertoService.buscar(null, null, null, null))
+            .thenReturn(List.of(conciertoMock));
 
         mockMvc.perform(get("/api/v1/conciertos"))
                 .andExpect(status().isOk())
@@ -75,5 +77,31 @@ public class ConciertoControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(conciertoService, times(1)).eliminar(1L);
+    }
+
+    @Test
+    void buscar_ConFechaDesde_DebeRetornarOk() throws Exception {
+        Concierto concierto = new Concierto();
+        concierto.setArtista("Bad Bunny");
+        concierto.setFecha(LocalDate.of(2026, 12, 10));
+
+        when(conciertoService.buscar(
+            null, null, LocalDate.of(2026, 12, 1), null))
+            .thenReturn(List.of(concierto));
+
+        mockMvc.perform(get("/api/v1/conciertos")
+                .param("fechaDesde", "2026-12-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].artista").value("Bad Bunny"));
+    }
+
+    @Test
+    void buscar_FechaInvalida_DebeRetornarBadRequest() throws Exception {
+    mockMvc.perform(get("/api/v1/conciertos")
+            .param("fechaDesde", "2026-13-40"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.mensaje")
+                    .value("El parámetro 'fechaDesde' debe ser una fecha válida con formato YYYY-MM-DD"));
     }
 }

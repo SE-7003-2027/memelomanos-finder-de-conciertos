@@ -1,5 +1,7 @@
 package com.memelomanos.finderconciertos.service;
 
+
+import com.memelomanos.finderconciertos.repository.ConciertoSpecifications;
 import com.memelomanos.finderconciertos.exception.ConciertoNoEncontradoException;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.ConciertoRequest;
@@ -8,8 +10,11 @@ import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
 import java.util.List;
 import java.util.Objects;
+import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 @Service
 public class ConciertoService {
@@ -25,31 +30,43 @@ public class ConciertoService {
 
     @Transactional(readOnly = true)
     public List<Concierto> buscarPorArtista(String artista) {
-        return buscar(artista, null);
+        return buscar(artista, null, null, null);
     }
 
     @Transactional(readOnly = true)
-    public List<Concierto> buscar(String artista, String ciudad) {
-        String filtroArtista = artista == null ? "" : artista.strip();
-        String filtroCiudad = ciudad == null ? "" : ciudad.strip();
+    public List<Concierto> buscar(
+        String artista,
+        String ciudad,
+        LocalDate fechaDesde,
+        LocalDate fechaHasta) {
 
-        if (!filtroArtista.isEmpty() && !filtroCiudad.isEmpty()) {
-            return conciertoRepository
-                    .findByArtistaContainingIgnoreCaseAndCiudadContainingIgnoreCase(
-                            filtroArtista, filtroCiudad);
-        }
+    Specification<Concierto> filtros =
+            (concierto, busqueda, constructor) ->
+                    constructor.conjunction();
 
-        if (!filtroArtista.isEmpty()) {
-            return conciertoRepository.findByArtistaContainingIgnoreCase(
-                    filtroArtista);
-        }
+    if (artista != null && !artista.isBlank()) {
+        filtros = filtros.and(
+                ConciertoSpecifications.porArtista(artista));
+    }
 
-        if (!filtroCiudad.isEmpty()) {
-            return conciertoRepository.findByCiudadContainingIgnoreCase(
-                    filtroCiudad);
-        }
+    if (ciudad != null && !ciudad.isBlank()) {
+        filtros = filtros.and(
+                ConciertoSpecifications.porCiudad(ciudad));
+    }
 
-        return conciertoRepository.findAll();
+    if (fechaDesde != null) {
+        filtros = filtros.and(
+                ConciertoSpecifications.desdeFecha(fechaDesde));
+    }
+
+    if (fechaHasta != null) {
+        filtros = filtros.and(
+                ConciertoSpecifications.hastaFecha(fechaHasta));
+    }
+
+        return conciertoRepository.findAll(
+            filtros,
+            Sort.by(Sort.Direction.ASC, "fecha"));
     }
 
     @Transactional(readOnly = true)

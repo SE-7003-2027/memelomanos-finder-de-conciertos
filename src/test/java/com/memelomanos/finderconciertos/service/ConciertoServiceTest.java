@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Sort;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
@@ -35,17 +36,24 @@ public class ConciertoServiceTest {
     private ConciertoService conciertoService;
 
     @Test
-    void buscar_SinFiltros_RetornaTodos() {
-        Concierto c1 = new Concierto();
-        c1.setArtista("Artista 1");
-        
-        when(conciertoRepository.findAll()).thenReturn(List.of(c1));
+void buscar_SinFiltros_RetornaTodos() {
+    Concierto c1 = new Concierto();
+    c1.setArtista("Artista 1");
 
-        List<Concierto> resultado = conciertoService.buscar(null, null);
+    when(conciertoRepository.findAll(
+            any(org.springframework.data.jpa.domain.Specification.class),
+            any(Sort.class)))
+            .thenReturn(List.of(c1));
 
-        assertFalse(resultado.isEmpty());
-        assertEquals(1, resultado.size());
-        verify(conciertoRepository, times(1)).findAll();
+    List<Concierto> resultado =
+            conciertoService.buscar(null, null, null, null);
+
+    assertFalse(resultado.isEmpty());
+    assertEquals(1, resultado.size());
+
+    verify(conciertoRepository, times(1)).findAll(
+            any(org.springframework.data.jpa.domain.Specification.class),
+            any(Sort.class));
     }
 
     @Test
