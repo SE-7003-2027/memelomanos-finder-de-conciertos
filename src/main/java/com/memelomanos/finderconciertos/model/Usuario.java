@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,6 +27,9 @@ public class Usuario {
     @Column(unique = true)
     private String correo;
 
+    @JsonIgnore
+    private String password;
+
     @ManyToMany
     private List<Concierto> favoritos = new ArrayList<>();
 
@@ -35,6 +39,12 @@ public class Usuario {
     public Usuario(String nombre, String correo) {
         this.nombre = nombre;
         this.correo = correo;
+    }
+
+    public Usuario(String nombre, String correo, String password) {
+        this.nombre = nombre;
+        this.correo = correo;
+        this.password = password;
     }
 
     public Long getId() {
@@ -55,6 +65,14 @@ public class Usuario {
 
     public void setCorreo(String correo) {
         this.correo = correo;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public List<Concierto> getFavoritos() {

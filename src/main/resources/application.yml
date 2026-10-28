@@ -9,6 +9,10 @@ spring:
     hibernate:
       ddl-auto: update
 
+jwt:
+  secret: ${JWT_SECRET:clave_secreta_por_defecto_para_desarrollo_local_de_al_menos_256_bits_memelomanos_finder_conciertos}
+  expiration-ms: 86400000 # 24 horas
+
 springdoc:
   swagger-ui:
     # Apunta al contrato escrito a mano (src/main/resources/static/openapi.yml),

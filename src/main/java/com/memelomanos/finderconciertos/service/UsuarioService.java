@@ -2,12 +2,16 @@ package com.memelomanos.finderconciertos.service;
 
 import com.memelomanos.finderconciertos.exception.ConciertoNoEncontradoException;
 import com.memelomanos.finderconciertos.exception.CorreoDuplicadoException;
+import com.memelomanos.finderconciertos.exception.CredencialesInvalidasException;
 import com.memelomanos.finderconciertos.exception.UsuarioNoEncontradoException;
 import com.memelomanos.finderconciertos.model.Concierto;
+import com.memelomanos.finderconciertos.model.LoginResponse;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
+import com.memelomanos.finderconciertos.security.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +22,21 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final ConciertoRepository conciertoRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Autowired
     public UsuarioService(UsuarioRepository usuarioRepository,
-                          ConciertoRepository conciertoRepository) {
+                          ConciertoRepository conciertoRepository,
+                          PasswordEncoder passwordEncoder,
+                          JwtService jwtService) {
         this.usuarioRepository = usuarioRepository;
         this.conciertoRepository = conciertoRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
-    public Usuario registrarUsuario(String nombre, String correo) {
+    public Usuario registrarUsuario(String nombre, String correo, String rawPassword) {
         if (usuarioRepository.existsByCorreo(correo)) {
             throw new CorreoDuplicadoException(
                     "El correo que intentas introducir ya se encuentra registrado.");
@@ -35,7 +45,22 @@ public class UsuarioService {
         Usuario userNuevo = new Usuario();
         userNuevo.setNombre(nombre);
         userNuevo.setCorreo(correo);
+        if (rawPassword != null) {
+            userNuevo.setPassword(passwordEncoder.encode(rawPassword));
+        }
         return usuarioRepository.save(userNuevo);
+    }
+
+    public LoginResponse login(String correo, String rawPassword) {
+        Usuario usuario = usuarioRepository.findByCorreo(correo)
+                .orElseThrow(() -> new CredencialesInvalidasException("Credenciales invalidas"));
+
+        if (usuario.getPassword() == null || !passwordEncoder.matches(rawPassword, usuario.getPassword())) {
+            throw new CredencialesInvalidasException("Credenciales invalidas");
+        }
+
+        String token = jwtService.generarToken(usuario.getCorreo(), usuario.getId());
+        return new LoginResponse(token);
     }
 
     public Usuario buscarPerfilPorCorreo(String correo) {
@@ -110,4 +135,3 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 }
-
