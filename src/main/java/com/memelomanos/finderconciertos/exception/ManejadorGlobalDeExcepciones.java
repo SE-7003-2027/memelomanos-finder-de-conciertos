@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +48,16 @@ public class ManejadorGlobalDeExcepciones {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorRespuesta> manejarBodyIlegible(HttpMessageNotReadableException ex) {
         return construir(HttpStatus.BAD_REQUEST, "El body de la peticion no es un JSON valido");
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorRespuesta> manejarViolacionDeRestriccion(
+            ConstraintViolationException ex) {
+        String detalle = ex.getConstraintViolations().stream()
+                .map(violacion -> violacion.getMessage())
+                .collect(Collectors.joining(", "));
+
+        return construir(HttpStatus.BAD_REQUEST, detalle);
     }
 
     private ResponseEntity<ErrorRespuesta> construir(HttpStatus status, String mensaje) {
