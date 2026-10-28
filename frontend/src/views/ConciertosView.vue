@@ -1,9 +1,9 @@
 <script setup>
+
 import { onMounted, ref } from 'vue'
 import { buscarConciertos } from '@/api/conciertos'
 import BarraBusqueda from '@/components/BarraBusqueda.vue'
-import BotonFavorito from '@/components/BotonFavorito.vue'
-import { formatearFecha } from '@/utils/fechas'
+import TarjetaConcierto from '@/components/TarjetaConcierto.vue'
 
 const conciertos = ref([])
 const cargando = ref(true)
@@ -33,7 +33,6 @@ onMounted(() => {
     <header class="cabecera">
       <h1>Conciertos</h1>
       <p class="texto-suave">
-        Encuentra conciertos por artista, ciudad o ambos.
       </p>
     </header>
 
@@ -59,8 +58,6 @@ onMounted(() => {
       <div v-else-if="!conciertos.length" class="tarjeta estado-vacio">
         <h2>Sin resultados</h2>
         <p class="texto-suave">
-          No encontramos conciertos. Prueba con otro artista o ciudad,
-          o deja los campos vacíos para ver todos.
         </p>
       </div>
 
@@ -74,17 +71,8 @@ onMounted(() => {
           <li
             v-for="concierto in conciertos"
             :key="concierto.id"
-            class="tarjeta concierto"
           >
-            <div class="informacion">
-              <h2>{{ concierto.artista }}</h2>
-              <p class="texto-suave">
-                {{ formatearFecha(concierto.fecha) }} ·
-                {{ concierto.lugar }}, {{ concierto.ciudad }}
-              </p>
-            </div>
-
-            <BotonFavorito :concierto="concierto" />
+            <TarjetaConcierto :concierto="concierto" />
           </li>
         </ul>
       </template>
@@ -111,30 +99,13 @@ onMounted(() => {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.concierto {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  align-items: center;
-  justify-content: space-between;
 }
 
-.informacion {
+.lista > li {
   min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.concierto h2 {
-  font-size: 18px;
-}
-
-.concierto p {
-  margin: 4px 0 0;
 }
 
 .estado-vacio h2 {
@@ -143,5 +114,11 @@ onMounted(() => {
 
 .estado-vacio p {
   margin: 8px 0 0;
+}
+
+@media (max-width: 600px) {
+  .lista {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>
