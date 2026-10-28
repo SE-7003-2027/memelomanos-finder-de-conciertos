@@ -35,6 +35,8 @@ el mismo PR.
 | Registro, consulta, edición y baja de perfil | ✅ | ✅ |
 | Marcar y quitar conciertos favoritos | ✅ | ✅ |
 | Login con contraseña y token | En curso (#56, #57) | — |
+| Integración continua | Pendiente | — |
+| Configuración de CORS | Pendiente | — |
 
 ## Stack
 
