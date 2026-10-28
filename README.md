@@ -127,6 +127,8 @@ Con la opción A:
 ./mvnw spring-boot:run
 ```
 
+Por defecto, el backend utiliza el perfil `dev`, que carga los conciertos y usuarios de prueba al iniciar la aplicación. Para utilizar otro perfil, define la variable de entorno `SPRING_PROFILES_ACTIVE` con el nombre del perfil deseado.
+
 Con las opciones B o C, pon tus datos antes del comando:
 
 ```bash

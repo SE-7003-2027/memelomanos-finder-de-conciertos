@@ -31,4 +31,7 @@ Thumbs.db
 
 ### Logs ###
 *.log
-logs/memelomanos-finder-de-conciertos.wiki/
+logs/
+
+### Wiki ###
+memelomanos-finder-de-conciertos.wiki/
