@@ -8,12 +8,15 @@ import com.memelomanos.finderconciertos.model.RegistroRequest;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
+@Validated
 @RestController
 public class UsuarioController {
 
@@ -37,7 +40,10 @@ public class UsuarioController {
     }
 
     @GetMapping("/usuarios/perfil")
-    public Usuario obtenerPerfil(@RequestParam String correo) {
+    public Usuario obtenerPerfil(
+        @RequestParam
+        @Email(message = "El correo no es válido")
+        String correo) {
         return usuarioService.buscarPerfilPorCorreo(correo);
     }
 

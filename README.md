@@ -26,15 +26,17 @@ el mismo PR.
 ### Funcionalidades
 
 | Funcionalidad | API | Interfaz |
-| ------------- | :-: | :------: |
-| Lista de conciertos | ✅ | Versión temporal (la reemplaza #50) |
-| Detalle de un concierto | ✅ | En curso (#50) |
-| Búsqueda de conciertos por artista y ciudad | ✅ | En curso (#50) |
+| ------------- | --- | -------- |
+| Lista de conciertos | Listo | Listo |
+| Detalle de un concierto | Listo | Listo |
+| Búsqueda de conciertos por artista y ciudad | Listo | Listo |
 | Búsqueda de conciertos por fecha | En curso (#53) | — |
-| Alta, edición y baja de conciertos | ✅ | — |
-| Registro, consulta, edición y baja de perfil | ✅ | ✅ |
-| Marcar y quitar conciertos favoritos | ✅ | ✅ |
+| Alta, edición y baja de conciertos | Listo | — |
+| Registro, consulta, edición y baja de perfil | Listo | Listo |
+| Marcar y quitar conciertos favoritos | Listo | Listo |
 | Login con contraseña y token | En curso (#56, #57) | — |
+| Integración continua | Pendiente | — |
+| Configuración de CORS | Pendiente | — |
 
 ## Stack
 
@@ -126,6 +128,8 @@ Con la opción A:
 ```bash
 ./mvnw spring-boot:run
 ```
+
+Por defecto, el backend utiliza el perfil `dev`, que carga los conciertos y usuarios de prueba al iniciar la aplicación. Para utilizar otro perfil, define la variable de entorno `SPRING_PROFILES_ACTIVE` con el nombre del perfil deseado.
 
 Con las opciones B o C, pon tus datos antes del comando:
 

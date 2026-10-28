@@ -10,6 +10,11 @@ const router = createRouter({
       component: ConciertosView,
     },
     {
+      path: '/conciertos/:id',
+      name: 'concierto-detalle',
+      component: () => import('../views/ConciertoDetalleView.vue'),
+    },
+    {
       path: '/registro',
       name: 'registro',
       component: () => import('../views/RegistroView.vue'),

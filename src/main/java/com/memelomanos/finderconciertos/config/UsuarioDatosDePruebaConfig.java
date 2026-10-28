@@ -1,3 +1,4 @@
+
 package com.memelomanos.finderconciertos.config;
 
 import com.memelomanos.finderconciertos.model.Usuario;
@@ -6,12 +7,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Esta clase sirve para cargar usuarios de prueba al iniciar la aplicacion
  * para poder probar el endpoint GET /usuarios/perfil sin la base vacia.
  */
 @Configuration
+@Profile("dev")
 public class UsuarioDatosDePruebaConfig {
 
     @Bean
