@@ -4,6 +4,8 @@ Proyecto de la materia Ingeniería en Software · Team 8 (memelomanos), UNAM
 
 Repositorio: https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos
 
+[![CI](https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos/actions/workflows/ci.yml)
+
 ## Equipo
 
 - Ricardo Buendía
