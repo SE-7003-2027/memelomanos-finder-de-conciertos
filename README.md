@@ -26,14 +26,14 @@ el mismo PR.
 ### Funcionalidades
 
 | Funcionalidad | API | Interfaz |
-| ------------- | :-: | :------: |
-| Lista de conciertos | ✅ | ✅ |
-| Detalle de un concierto | ✅ | ✅ |
-| Búsqueda de conciertos por artista y ciudad | ✅ | ✅ |
+| ------------- | --- | -------- |
+| Lista de conciertos | Listo | Listo |
+| Detalle de un concierto | Listo | Listo |
+| Búsqueda de conciertos por artista y ciudad | Listo | Listo |
 | Búsqueda de conciertos por fecha | En curso (#53) | — |
-| Alta, edición y baja de conciertos | ✅ | — |
-| Registro, consulta, edición y baja de perfil | ✅ | ✅ |
-| Marcar y quitar conciertos favoritos | ✅ | ✅ |
+| Alta, edición y baja de conciertos | Listo | — |
+| Registro, consulta, edición y baja de perfil | Listo | Listo |
+| Marcar y quitar conciertos favoritos | Listo | Listo |
 | Login con contraseña y token | En curso (#56, #57) | — |
 | Integración continua | Pendiente | — |
 | Configuración de CORS | Pendiente | — |
