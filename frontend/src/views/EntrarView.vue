@@ -1,36 +1,43 @@
 <script setup>
-// "Entrar" temporal (issue #52): busca el perfil por correo con
-// GET /usuarios/perfil y lo deja como usuario actual. No pide contraseña
-// porque todavia no hay login; se reemplaza cuando se cierre #57.
-import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { obtenerPerfil } from '@/api/usuarios'
-import { iniciarSesion } from '@/stores/usuario'
+// Inicio de sesion con correo y contraseña (POST /usuarios/login).
+import { reactive, ref } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { usuarioActual, iniciarSesion } from '@/stores/usuario'
 import { esCorreoValido } from '@/utils/validacion'
 
+const route = useRoute()
 const router = useRouter()
 
-const correo = ref('')
-const errorCorreo = ref('')
+const datos = reactive({ correo: '', password: '' })
+const errores = ref({})
 const errorGeneral = ref('')
 const enviando = ref(false)
 
+const recienRegistrado = route.query.registrado === '1'
+
 async function enviar() {
-  errorCorreo.value = ''
   errorGeneral.value = ''
-  if (!esCorreoValido(correo.value)) {
-    errorCorreo.value = 'Escribe un correo valido, por ejemplo nombre@correo.com.'
-    return
+  errores.value = {}
+  if (!esCorreoValido(datos.correo)) {
+    errores.value.correo = 'Escribe un correo válido, por ejemplo nombre@correo.com.'
   }
+  if (!datos.password) {
+    errores.value.password = 'Escribe tu contraseña.'
+  }
+  if (Object.keys(errores.value).length) return
 
   enviando.value = true
   try {
-    const usuario = await obtenerPerfil(correo.value.trim())
-    await iniciarSesion(usuario)
-    router.push({ name: 'perfil' })
+    await iniciarSesion(datos.correo.trim(), datos.password)
+    // Solo se regresa a rutas internas de la app.
+    const volver = route.query.volver
+    const destino = typeof volver === 'string' && volver.startsWith('/') && !volver.startsWith('//')
+      ? volver
+      : '/perfil'
+    router.push(destino)
   } catch (e) {
-    if (e.status === 404) {
-      errorCorreo.value = 'No hay ninguna cuenta con ese correo.'
+    if (e.status === 401) {
+      errorGeneral.value = 'El correo o la contraseña no son correctos.'
     } else {
       errorGeneral.value = e.message
     }
@@ -44,28 +51,46 @@ async function enviar() {
   <div class="contenedor">
     <header>
       <h1>Entrar</h1>
-      <p class="texto-suave">Por ahora solo necesitas tu correo. La contraseña llega con el login.</p>
+      <p class="texto-suave">Entra con tu correo y tu contraseña para ver tu perfil y tus favoritos.</p>
     </header>
+
+    <p v-if="usuarioActual.avisoSesion" class="aviso aviso-error" role="status">{{ usuarioActual.avisoSesion }}</p>
+    <p v-else-if="recienRegistrado" class="aviso aviso-exito" role="status">
+      Tu cuenta quedó creada. Entra con tu correo y tu contraseña.
+    </p>
 
     <form class="tarjeta formulario" novalidate @submit.prevent="enviar">
       <div class="campo">
         <label for="entrar-correo">Correo</label>
         <input
           id="entrar-correo"
-          v-model="correo"
+          v-model="datos.correo"
           type="email"
           autocomplete="email"
-          :aria-invalid="!!errorCorreo"
+          :aria-invalid="!!errores.correo"
           aria-describedby="entrar-correo-error"
         />
-        <span v-if="errorCorreo" id="entrar-correo-error" class="error-campo">{{ errorCorreo }}</span>
+        <span v-if="errores.correo" id="entrar-correo-error" class="error-campo">{{ errores.correo }}</span>
+      </div>
+
+      <div class="campo">
+        <label for="entrar-password">Contraseña</label>
+        <input
+          id="entrar-password"
+          v-model="datos.password"
+          type="password"
+          autocomplete="current-password"
+          :aria-invalid="!!errores.password"
+          aria-describedby="entrar-password-error"
+        />
+        <span v-if="errores.password" id="entrar-password-error" class="error-campo">{{ errores.password }}</span>
       </div>
 
       <p v-if="errorGeneral" class="aviso aviso-error" role="alert">{{ errorGeneral }}</p>
 
       <div class="acciones">
         <button type="submit" class="boton boton-primario" :disabled="enviando">
-          {{ enviando ? 'Buscando…' : 'Entrar' }}
+          {{ enviando ? 'Entrando…' : 'Entrar' }}
         </button>
       </div>
     </form>

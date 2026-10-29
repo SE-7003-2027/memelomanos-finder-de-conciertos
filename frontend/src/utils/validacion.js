@@ -20,3 +20,15 @@ export function validarDatosUsuario({ nombre, correo }) {
   }
   return errores
 }
+
+// Mismo minimo que pide el backend en RegistroRequest.
+export const LARGO_MINIMO_PASSWORD = 8
+
+/** Regresa el mensaje de error de la contraseña, o '' si esta bien. */
+export function validarPassword(password) {
+  if (!password) return 'Escribe una contraseña.'
+  if (password.length < LARGO_MINIMO_PASSWORD) {
+    return `La contraseña debe tener al menos ${LARGO_MINIMO_PASSWORD} caracteres.`
+  }
+  return ''
+}

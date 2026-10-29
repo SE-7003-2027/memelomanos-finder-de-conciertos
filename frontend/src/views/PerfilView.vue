@@ -4,7 +4,13 @@
 import { reactive, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { actualizarUsuario, eliminarUsuario } from '@/api/usuarios'
-import { usuarioActual, actualizarDatos, cerrarSesion, quitarFavorito } from '@/stores/usuario'
+import {
+  usuarioActual,
+  actualizarDatos,
+  cerrarSesion,
+  quitarFavorito,
+  verificarPassword,
+} from '@/stores/usuario'
 import { validarDatosUsuario } from '@/utils/validacion'
 import { formatearFecha } from '@/utils/fechas'
 
@@ -16,7 +22,7 @@ const aviso = ref('')
 
 // --- Edicion de datos ---
 const editando = ref(false)
-const datos = reactive({ nombre: '', correo: '' })
+const datos = reactive({ nombre: '', correo: '', password: '' })
 const errores = ref({})
 const errorEdicion = ref('')
 const guardando = ref(false)
@@ -24,6 +30,7 @@ const guardando = ref(false)
 function empezarEdicion() {
   datos.nombre = usuarioActual.usuario.nombre
   datos.correo = usuarioActual.usuario.correo
+  datos.password = ''
   errores.value = {}
   errorEdicion.value = ''
   aviso.value = ''
@@ -33,13 +40,23 @@ function empezarEdicion() {
 async function guardar() {
   errorEdicion.value = ''
   errores.value = validarDatosUsuario(datos)
+  if (!datos.password) {
+    errores.value.password = 'Escribe tu contraseña para guardar los cambios.'
+  }
   if (Object.keys(errores.value).length) return
 
   guardando.value = true
   try {
+    // El backend pide la contraseña en el PUT pero no la revisa, asi que
+    // la comprobamos aqui con el login antes de guardar.
+    if (!(await verificarPassword(datos.password))) {
+      errores.value = { password: 'La contraseña no es correcta.' }
+      return
+    }
     const usuario = await actualizarUsuario(usuarioActual.usuario.id, {
       nombre: datos.nombre.trim(),
       correo: datos.correo.trim(),
+      password: datos.password,
     })
     actualizarDatos(usuario)
     editando.value = false
@@ -95,12 +112,11 @@ function salir() {
 
 <template>
   <div class="contenedor">
-    <p v-if="usuarioActual.cargando" class="texto-suave">Cargando tu perfil…</p>
-
-    <template v-else-if="!usuarioActual.usuario">
+    <template v-if="!usuarioActual.usuario">
       <h1>Mi perfil</h1>
+      <p v-if="usuarioActual.avisoSesion" class="aviso aviso-error" role="status">{{ usuarioActual.avisoSesion }}</p>
       <div class="tarjeta">
-        <p>Para ver tu perfil y tus favoritos, entra con tu correo o crea una cuenta.</p>
+        <p>Para ver tu perfil y tus favoritos, entra con tu cuenta o crea una nueva.</p>
         <div class="acciones">
           <RouterLink to="/entrar" class="boton boton-primario">Entrar</RouterLink>
           <RouterLink to="/registro" class="boton">Crear cuenta</RouterLink>
@@ -164,6 +180,19 @@ function salir() {
             <label for="perfil-correo">Correo</label>
             <input id="perfil-correo" v-model="datos.correo" type="email" autocomplete="email" :aria-invalid="!!errores.correo" />
             <span v-if="errores.correo" class="error-campo">{{ errores.correo }}</span>
+          </div>
+          <div class="campo">
+            <label for="perfil-password">Tu contraseña actual</label>
+            <input
+              id="perfil-password"
+              v-model="datos.password"
+              type="password"
+              autocomplete="current-password"
+              :aria-invalid="!!errores.password"
+              aria-describedby="perfil-password-ayuda"
+            />
+            <span v-if="errores.password" id="perfil-password-ayuda" class="error-campo">{{ errores.password }}</span>
+            <span v-else id="perfil-password-ayuda" class="texto-suave ayuda">La pedimos para confirmar que eres tú.</span>
           </div>
           <p v-if="errorEdicion" class="aviso aviso-error" role="alert">{{ errorEdicion }}</p>
           <div class="acciones">
@@ -280,6 +309,10 @@ function salir() {
 .datos dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.ayuda {
+  font-size: 14px;
 }
 
 a.boton {
