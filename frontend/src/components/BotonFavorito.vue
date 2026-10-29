@@ -3,12 +3,14 @@
 // Pensado para ponerse en la tarjeta de concierto de #50:
 //   <BotonFavorito :concierto="concierto" />
 import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { usuarioActual, esFavorito, agregarFavorito, quitarFavorito } from '@/stores/usuario'
 
 const props = defineProps({
   concierto: { type: Object, required: true },
 })
+
+const route = useRoute()
 
 const ocupado = ref(false)
 const error = ref('')
@@ -48,7 +50,11 @@ async function alternar() {
       <span aria-hidden="true">{{ marcado ? '♥' : '♡' }}</span>
       {{ marcado ? 'En favoritos' : 'Favorito' }}
     </button>
-    <RouterLink v-else to="/entrar" class="texto-suave enlace-entrar">Entra para guardar favoritos</RouterLink>
+    <RouterLink
+      v-else
+      :to="{ name: 'entrar', query: { volver: route.fullPath } }"
+      class="texto-suave enlace-entrar"
+    >Entra para guardar favoritos</RouterLink>
     <span v-if="error" class="error" role="alert">{{ error }}</span>
   </span>
 </template>

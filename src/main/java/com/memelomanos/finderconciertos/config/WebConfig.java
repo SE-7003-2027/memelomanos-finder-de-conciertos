@@ -25,8 +25,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                // Permite el puerto por defecto de desarrollo de Angular (4200), se puede cambiar si es necesario
-                .allowedOrigins("http://localhost:4200", "http://127.0.0.1:4200")
+                // Permite el servidor de desarrollo de Vite (5173), donde corre la interfaz en Vue
+                .allowedOrigins("http://localhost:5173", "http://127.0.0.1:5173")
                 // Metodos HTTP permitidos
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 // Encabezados permitidos (se ocupan para JWT y JSON)
