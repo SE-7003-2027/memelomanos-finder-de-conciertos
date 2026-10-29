@@ -126,6 +126,112 @@
             }
           ]
         },
+
+
+{
+  "name": "Buscar conciertos desde una fecha",
+  "request": {
+    "method": "GET",
+    "header": [],
+    "url": {
+      "raw": "{{baseUrl}}/conciertos?fechaDesde=2026-12-01",
+      "host": ["{{baseUrl}}"],
+      "path": ["conciertos"],
+      "query": [
+        {
+          "key": "fechaDesde",
+          "value": "2026-12-01"
+        }
+      ]
+    }
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Status code is 200', function () {",
+          "    pm.response.to.have.status(200);",
+          "});"
+        ]
+      }
+    }
+  ]
+},
+{
+  "name": "Buscar conciertos por artista y fecha hasta",
+  "request": {
+    "method": "GET",
+    "header": [],
+    "url": {
+      "raw": "{{baseUrl}}/conciertos?artista=queen&fechaHasta=2026-12-31",
+      "host": ["{{baseUrl}}"],
+      "path": ["conciertos"],
+      "query": [
+        {
+          "key": "artista",
+          "value": "queen"
+        },
+        {
+          "key": "fechaHasta",
+          "value": "2026-12-31"
+        }
+      ]
+    }
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Status code is 200', function () {",
+          "    pm.response.to.have.status(200);",
+          "});"
+        ]
+      }
+    }
+  ]
+},
+{
+  "name": "Buscar conciertos con fecha inválida",
+  "request": {
+    "method": "GET",
+    "header": [],
+    "url": {
+      "raw": "{{baseUrl}}/conciertos?fechaDesde=2026-13-40",
+      "host": ["{{baseUrl}}"],
+      "path": ["conciertos"],
+      "query": [
+        {
+          "key": "fechaDesde",
+          "value": "2026-13-40"
+        }
+      ]
+    }
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Status code is 400', function () {",
+          "    pm.response.to.have.status(400);",
+          "});",
+          "pm.test('Error response has the common format', function () {",
+          "    const respuesta = pm.response.json();",
+          "    pm.expect(respuesta.status).to.eql(400);",
+          "    pm.expect(respuesta.mensaje).to.be.a('string');",
+          "});"
+        ]
+      }
+    }
+  ]
+},
+
+
         {
           "name": "Crear concierto",
           "request": {

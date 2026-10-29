@@ -5,6 +5,8 @@ import com.memelomanos.finderconciertos.model.ConciertoRequest;
 import com.memelomanos.finderconciertos.service.ConciertoService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,9 +29,20 @@ public class ConciertoController {
 
     @GetMapping("/conciertos")
     public List<Concierto> buscar(
-            @RequestParam(required = false) String artista,
-            @RequestParam(required = false) String ciudad) {
-        return conciertoService.buscar(artista, ciudad);
+        @RequestParam(required = false) String artista,
+        @RequestParam(required = false) String ciudad,
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta) {
+
+    if (fechaDesde != null && fechaHasta != null
+            && fechaDesde.isAfter(fechaHasta)) {
+        throw new IllegalArgumentException(
+                "La fechaDesde no puede ser posterior a fechaHasta");
+    }
+
+    return conciertoService.buscar(artista, ciudad, fechaDesde, fechaHasta);
     }
 
     @GetMapping("/conciertos/{id}")

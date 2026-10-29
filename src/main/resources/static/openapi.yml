@@ -14,9 +14,10 @@ paths:
       summary: Buscar conciertos
       description: >
         Obtiene la lista global de conciertos disponibles.
-        Permite filtrar por artista y ciudad.
-        Busca coincidencias parciales e ignora mayusculas.
-        Si se envian ambos filtros, se aplican los dos.
+        Permite filtrar por artista, ciudad, fecha inicial y fecha final.
+        Busca coincidencias parciales para artista y ciudad e ignora mayúsculas
+        y minúsculas. Los filtros enviados se aplican conjuntamente.
+        Las fechas son inclusivas y los resultados se ordenan por fecha ascendente.
       tags:
         - Conciertos
       parameters:
@@ -32,6 +33,20 @@ paths:
           required: false
           schema:
             type: string
+        - name: fechaDesde
+          in: query
+          description: Fecha inicial inclusiva para filtrar conciertos (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: fechaHasta
+          in: query
+          description: Fecha final inclusiva para filtrar conciertos (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: Lista de conciertos obtenida exitosamente
@@ -41,6 +56,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Concierto'
+        '400':
+          description: Fecha inválida o rango de fechas incorrecto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     post:
       summary: Crear un concierto

@@ -171,6 +171,35 @@ curl "http://localhost:8080/api/v1/conciertos?artista=queen&ciudad=cdmx"
 Con los datos de prueba, el primer comando devuelve los conciertos de `Queen` y de `Queen tribute band`.
 
 ---
+También se puede filtrar por un rango de fechas usando los parámetros opcionales `fechaDesde` y `fechaHasta`. Las fechas deben tener el formato `YYYY-MM-DD`. Los límites son inclusivos: se incluyen los conciertos que ocurren exactamente en esas fechas. Los filtros se pueden combinar y los resultados se ordenan por fecha ascendente.
+
+Filtrar conciertos desde el 1 de diciembre de 2026:
+
+```bash
+curl "http://localhost:8080/api/v1/conciertos?fechaDesde=2026-12-01"
+```
+
+Buscar conciertos de Queen hasta el 31 de diciembre de 2026:
+
+```bash
+curl "http://localhost:8080/api/v1/conciertos?artista=queen&fechaHasta=2026-12-31"
+```
+
+Filtrar por ciudad y rango de fechas:
+
+```bash
+curl "http://localhost:8080/api/v1/conciertos?ciudad=cdmx&fechaDesde=2026-12-01&fechaHasta=2026-12-31"
+```
+
+Si se envía una fecha inválida:
+
+```bash
+curl -i "http://localhost:8080/api/v1/conciertos?fechaDesde=2026-13-40"
+```
+
+La respuesta esperada es `400 Bad Request`, con el formato JSON común de errores de la API.
+
+Si `fechaDesde` es posterior a `fechaHasta`, también se espera `400 Bad Request`.
 
 ### 3.3 Consultar el perfil
 
@@ -796,7 +825,7 @@ Para las solicitudes que utilizan IDs en la URL, reemplazar los valores de ejemp
 | `/usuarios/{id}`                         | DELETE | `204 No Content` | `404 Not Found`                                    |
 | `/usuarios/{id}/favoritos`               | GET    | `200 OK`         | `404 Not Found`                                    |
 | `/usuarios/{id}/favoritos/{conciertoId}` | DELETE | `204 No Content` | `404 Not Found`                                    |
-| `/conciertos`                            | GET    | `200 OK`         | —                                                  |
+| `/conciertos`                            | GET    | `200 OK`         | `400 Bad Request`                                  |
 | `/conciertos`                            | POST   | `201 Created`    | `400 Bad Request`                                  |
 | `/conciertos/{id}`                       | GET    | `200 OK`         | `404 Not Found`                                    |
 | `/conciertos/{id}`                       | PUT    | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
