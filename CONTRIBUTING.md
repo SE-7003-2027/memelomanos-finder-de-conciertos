@@ -81,7 +81,68 @@ Como requester (quien abre el PR):
 
 ## Revisión de código
 
-Como revisor:
+### Rotación de revisores
+
+Cada PR lo revisa el **revisor principal** del autor. Su approval es
+obligatorio. Si no responde en 48 h, el autor le pasa la revisión al
+**revisor de respaldo**. Con esta rotación todos revisan PRs de dos
+personas distintas.
+
+| Autor del PR | Revisor principal | Revisor de respaldo |
+| ------------ | ----------------- | ------------------- |
+| Sofía (`soffochoa`) | Ihebel (`IhebelTenorio`) | Miguel (`Sensationalforge`) |
+| Ihebel (`IhebelTenorio`) | Miguel (`Sensationalforge`) | Ricardo (`ricardobuendiaa`) |
+| Miguel (`Sensationalforge`) | Ricardo (`ricardobuendiaa`) | Saúl (`Saulssof`) |
+| Ricardo (`ricardobuendiaa`) | Saúl (`Saulssof`) | Sofía (`soffochoa`) |
+| Saúl (`Saulssof`) | Sofía (`soffochoa`) | Ihebel (`IhebelTenorio`) |
+
+Cada issue indica al inicio quién lo revisa. Al abrir el PR, agrega a esa
+persona en **Reviewers** y menciónala en la sección "Revisor asignado" de
+la plantilla.
+
+### Reglas para mergear
+
+- Ningún PR entra a `main` sin al menos **1 approval**. La rama `main` está
+  protegida: no permite merges sin revisión, ni siquiera a admins, y no
+  acepta merge commits.
+- **Nadie aprueba su propio PR.** Después del approval, el autor hace el
+  merge con *Squash and merge*.
+- Los PRs que cambian piezas compartidas (modelo de concierto, interfaz de
+  proveedores, agregador) necesitan **2 approvals**: el del principal y el
+  del respaldo.
+- El CI (`Tests`) debe estar en verde y todas las conversaciones del PR
+  resueltas antes de mergear.
+- Si subes commits nuevos después del approval, el approval se descarta y
+  hay que pedir otra revisión.
+
+### Tamaño de los PRs
+
+- Apunta a **menos de 400 líneas cambiadas** (sin contar `package-lock.json`
+  ni archivos generados). Si te pasas, divide el trabajo en varios PRs.
+- Un issue grande puede cerrarse con varios PRs: usa `Part of #123` en cada
+  uno y `Closes #123` solo en el último.
+- Si todavía no está listo, ábrelo como **Draft**.
+
+### Mantener la rama al día sin merge commits
+
+No hagas `git merge main` en tu rama. Para traer los cambios de `main`, usa
+rebase:
+
+```bash
+git fetch origin
+git rebase origin/main
+git push --force-with-lease
+```
+
+Recomendado (una sola vez): `git config --global pull.rebase true`.
+
+### Secretos
+
+Las API keys (Ticketmaster, SoundCloud, etc.) **nunca** se suben al repo.
+Se leen de variables de entorno y se documentan en `.env.example` con
+valores falsos.
+
+### Qué revisar
 
 - Verifica que el sistema funcione tal cual lo describe el requester
 - Verifica que las pruebas existentes pasen

@@ -35,6 +35,13 @@
 - [ ] Actualicé el README u otra documentación si era necesario
 - [ ] Mi rama está rebasada con main
 
+## Revisor asignado
+
+<!-- Según la rotación de CONTRIBUTING.md. Agrégalo también en "Reviewers".
+     Los PRs de piezas compartidas llevan dos revisores. -->
+
+@
+
 ## Issues relacionados
 
 <!-- Usa "Closes #123" para cerrar el issue automáticamente. -->
