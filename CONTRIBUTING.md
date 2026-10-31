@@ -90,10 +90,10 @@ personas distintas.
 
 | Autor del PR | Revisor principal | Revisor de respaldo |
 | ------------ | ----------------- | ------------------- |
-| Sofía (`soffochoa`) | Ihebel (`IhebelTenorio`) | Miguel (`Sensationalforge`) |
+| Sofía (`soffochoa`) | Saúl (`Saulssof`) | Miguel (`Sensationalforge`) |
 | Ihebel (`IhebelTenorio`) | Miguel (`Sensationalforge`) | Ricardo (`ricardobuendiaa`) |
 | Miguel (`Sensationalforge`) | Ricardo (`ricardobuendiaa`) | Saúl (`Saulssof`) |
-| Ricardo (`ricardobuendiaa`) | Saúl (`Saulssof`) | Sofía (`soffochoa`) |
+| Ricardo (`ricardobuendiaa`) | Ihebel (`IhebelTenorio`) | Sofía (`soffochoa`) |
 | Saúl (`Saulssof`) | Sofía (`soffochoa`) | Ihebel (`IhebelTenorio`) |
 
 Cada issue indica al inicio quién lo revisa. Al abrir el PR, agrega a esa
