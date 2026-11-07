@@ -14,6 +14,7 @@ src/main/resources/application.properties
 ### Variables de entorno y secretos ###
 .env
 .env.*
+!.env.example
 *.key
 *.pem
 

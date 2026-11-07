@@ -2,6 +2,7 @@ package com.memelomanos.finderconciertos.service;
 
 import com.memelomanos.finderconciertos.exception.ArtistaSinSoundCloudException;
 import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud;
+import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudOEmbedCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudPropiedades;
 import com.memelomanos.finderconciertos.model.Concierto;
@@ -18,8 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Obtiene el perfil de SoundCloud de un artista siguiendo ADR-005. Por
- * ahora usa el Plan B: oEmbed con la URL guardada en sus conciertos. Las
+ * Obtiene el perfil de SoundCloud de un artista siguiendo ADR-005:
+ * primero con la API (Plan A, si hay credenciales) y, si no se puede,
+ * con oEmbed y la URL guardada en sus conciertos (Plan B). Las
  * respuestas se guardan en memoria para no repetir llamadas.
  */
 @Service
@@ -30,6 +32,7 @@ public class ArtistaService {
     // Tope para que nombres inventados no hagan crecer la cache sin limite.
     static final int MAXIMO_EN_CACHE = 500;
 
+    private final SoundCloudCliente soundCloudCliente;
     private final SoundCloudOEmbedCliente oEmbedCliente;
     private final ConciertoRepository conciertoRepository;
     private final SoundCloudPropiedades propiedades;
@@ -37,16 +40,19 @@ public class ArtistaService {
     private final Map<String, EntradaCache> cache = new ConcurrentHashMap<>();
 
     @Autowired
-    public ArtistaService(SoundCloudOEmbedCliente oEmbedCliente,
+    public ArtistaService(SoundCloudCliente soundCloudCliente,
+                          SoundCloudOEmbedCliente oEmbedCliente,
                           ConciertoRepository conciertoRepository,
                           SoundCloudPropiedades propiedades) {
-        this(oEmbedCliente, conciertoRepository, propiedades, Clock.systemUTC());
+        this(soundCloudCliente, oEmbedCliente, conciertoRepository, propiedades, Clock.systemUTC());
     }
 
-    ArtistaService(SoundCloudOEmbedCliente oEmbedCliente,
+    ArtistaService(SoundCloudCliente soundCloudCliente,
+                   SoundCloudOEmbedCliente oEmbedCliente,
                    ConciertoRepository conciertoRepository,
                    SoundCloudPropiedades propiedades,
                    Clock reloj) {
+        this.soundCloudCliente = soundCloudCliente;
         this.oEmbedCliente = oEmbedCliente;
         this.conciertoRepository = conciertoRepository;
         this.propiedades = propiedades;
@@ -70,12 +76,27 @@ public class ArtistaService {
             return guardada.datos();
         }
 
-        ArtistaSoundCloud datos = buscarConOEmbed(nombreLimpio)
+        ArtistaSoundCloud datos = buscarConApi(nombreLimpio)
+                .or(() -> buscarConOEmbed(nombreLimpio))
                 .orElseThrow(() -> new ArtistaSinSoundCloudException(
                         "No encontramos a " + nombreLimpio + " en SoundCloud"));
 
         guardarEnCache(clave, datos, ahora);
         return datos;
+    }
+
+    private Optional<ArtistaSoundCloud> buscarConApi(String nombre) {
+        if (!soundCloudCliente.estaConfigurado()) {
+            return Optional.empty();
+        }
+        try {
+            return soundCloudCliente.buscarArtista(nombre);
+        } catch (RuntimeException ex) {
+            // Si la API falla (token rechazado, limite alcanzado, timeout)
+            // seguimos con el Plan B en lugar de responder 500.
+            log.warn("La API de SoundCloud fallo al buscar '{}': {}", nombre, ex.getMessage());
+            return Optional.empty();
+        }
     }
 
     private Optional<ArtistaSoundCloud> buscarConOEmbed(String nombre) {

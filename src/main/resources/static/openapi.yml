@@ -162,10 +162,13 @@ paths:
       summary: Obtener el perfil de SoundCloud de un artista
       description: >
         Devuelve el perfil del artista en SoundCloud y la URL del reproductor
-        embebible. Usa el endpoint público oEmbed con la `soundcloudUrl`
-        guardada en los conciertos de ese artista (Plan B de ADR-005), así que
-        la lista de pistas viene vacía.
+        embebible. Si el backend tiene credenciales de la API de SoundCloud
+        (Plan A de ADR-005) busca al artista por nombre y agrega sus pistas
+        más escuchadas (máximo 5). Si no, usa el endpoint público oEmbed con
+        la `soundcloudUrl` guardada en los conciertos de ese artista (Plan B)
+        y la lista de pistas viene vacía.
         Las respuestas se guardan en caché por artista durante 24 horas.
+        Las credenciales de SoundCloud nunca se incluyen en la respuesta.
       tags:
         - Artistas
       parameters:
@@ -806,20 +809,23 @@ components:
           description: URL del reproductor embebible (https://w.soundcloud.com/player/...) para usar en un iframe
         pistas:
           type: array
-          description: Pistas más escuchadas. Vacía cuando la respuesta viene de oEmbed
+          description: Pistas más escuchadas (máximo 5). Vacía cuando la respuesta viene de oEmbed
           items:
             $ref: '#/components/schemas/PistaSoundCloud'
         fuente:
           type: string
-          enum: [oembed]
-          description: De dónde salieron los datos (Plan B de ADR-005)
+          enum: [api, oembed]
+          description: De dónde salieron los datos (Plan A o Plan B de ADR-005)
       example:
         artista: Queen
         perfilUrl: https://soundcloud.com/ejemplo-artista
         avatarUrl: https://i1.sndcdn.com/avatars-000000000000-large.jpg
         widgetUrl: https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fejemplo-artista&show_comments=false&visual=false
-        pistas: []
-        fuente: oembed
+        pistas:
+          - titulo: Ejemplo de pista
+            url: https://soundcloud.com/ejemplo-artista/ejemplo-de-pista
+            duracionMs: 354000
+        fuente: api
 
     PistaSoundCloud:
       type: object
