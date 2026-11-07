@@ -1,5 +1,7 @@
 package com.memelomanos.finderconciertos.integracion.soundcloud;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -19,6 +21,12 @@ public record ArtistaSoundCloud(
         String fuente) {
 
     static final String WIDGET_URL = "https://w.soundcloud.com/player/";
+
+    /** URL del reproductor embebible de SoundCloud para un perfil o una pista. */
+    static String widgetPara(String urlSoundCloud) {
+        return WIDGET_URL + "?url=" + URLEncoder.encode(urlSoundCloud, StandardCharsets.UTF_8)
+                + "&show_comments=false&visual=false";
+    }
 
     public record PistaSoundCloud(String titulo, String url, long duracionMs) {
     }
