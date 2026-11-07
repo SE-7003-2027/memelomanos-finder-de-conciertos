@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class ManejadorGlobalDeExcepciones {
 
-    @ExceptionHandler({UsuarioNoEncontradoException.class, ConciertoNoEncontradoException.class})
+    @ExceptionHandler({UsuarioNoEncontradoException.class, ConciertoNoEncontradoException.class,
+            ArtistaSinSoundCloudException.class})
     public ResponseEntity<ErrorRespuesta> manejarNoEncontrado(RuntimeException ex) {
         return construir(HttpStatus.NOT_FOUND, ex.getMessage());
     }

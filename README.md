@@ -32,19 +32,22 @@ el mismo PR.
 | Lista de conciertos | Listo | Listo |
 | Detalle de un concierto | Listo | Listo |
 | Búsqueda de conciertos por artista y ciudad | Listo | Listo |
-| Búsqueda de conciertos por fecha | En curso (#53) | — |
+| Búsqueda de conciertos por fecha | Listo | Pendiente |
 | Alta, edición y baja de conciertos | Listo | — |
 | Registro, consulta, edición y baja de perfil | Listo | Listo |
 | Marcar y quitar conciertos favoritos | Listo | Listo |
-| Login con contraseña y token | En curso (#56, #57) | — |
-| Integración continua | Pendiente | — |
-| Configuración de CORS | Pendiente | — |
+| Login con contraseña y token JWT | Listo | Listo |
+| Escuchar al artista en SoundCloud | Listo, sin credenciales (#81) | En curso (#82) |
+| Integración continua | Listo | — |
+| Configuración de CORS | Listo | — |
 
 ## Stack
 
 - **Backend:** Java 21 + Spring Boot 3.3 (API REST), Maven. Ver [ADR-001](docs/adr/001-eleccion-de-stack-backend.md).
 - **Interfaz:** aplicación web (SPA) con Vue 3 + Vite, en la carpeta [`frontend/`](frontend/). Ver [ADR-002](docs/adr/002-eleccion-de-interfaz-grafica.md).
 - **Base de datos:** PostgreSQL 16. Ver [ADR-003](docs/adr/003-eleccion-de-base-de-datos.md).
+- **Autenticación:** correo y contraseña con token JWT. Ver [ADR-004](docs/adr/004-estrategia-de-autenticacion.md).
+- **Música del artista:** SoundCloud (reproductor embebido). Ver [ADR-005](docs/adr/005-integracion-con-soundcloud.md).
 
 # Cómo ejecutar el proyecto desde cero
 
@@ -187,9 +190,7 @@ en la wiki.
 ```
 
 Al terminar, la consola muestra un resumen de puntaje por categoría de
-pruebas. Mientras no exista el login (#57),
-`SeguridadApiTest.accesoAnonimo_Bloqueado` falla a propósito, así que el
-comando termina con `BUILD FAILURE` aunque todo lo demás pase.
+pruebas. GitHub Actions corre el mismo comando en cada PR (job `Tests`).
 
 ### Pruebas manuales de la API
 
