@@ -607,6 +607,70 @@ Si el usuario no existe:
 
 ---
 
+### 3.14 Obtener el perfil de SoundCloud de un artista
+
+Endpoint (público, no necesita token):
+
+```text
+GET /api/v1/artistas/{nombre}/soundcloud
+```
+
+Comando:
+
+```bash
+curl -i "http://localhost:8080/api/v1/artistas/Queen/soundcloud"
+```
+
+Los nombres con espacios van codificados en la URL, por ejemplo
+`/artistas/Bad%20Bunny/soundcloud`. El nombre no distingue mayúsculas.
+
+El backend busca la `soundcloudUrl` guardada en algún concierto del
+artista y le pide a SoundCloud el reproductor con su endpoint público
+oEmbed (ver ADR-005). Con los datos de prueba ningún concierto la tiene,
+así que la primera llamada responde `404`. Para probarlo, agrégala a un
+concierto con `PUT /conciertos/{id}` (requiere token, ver 3.11):
+
+  ```bash
+  curl -X PUT http://localhost:8080/api/v1/conciertos/1 \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer TU_TOKEN" \
+    -d '{
+      "artista": "Queen",
+      "fecha": "2026-11-20",
+      "ciudad": "CDMX",
+      "lugar": "Foro Sol",
+      "soundcloudUrl": "https://soundcloud.com/URL-DEL-ARTISTA"
+    }'
+  ```
+
+Respuesta esperada:
+
+```text
+200 OK
+```
+
+```json
+{
+  "artista": "Queen",
+  "perfilUrl": "https://soundcloud.com/URL-DEL-ARTISTA",
+  "avatarUrl": "https://i1.sndcdn.com/avatars-...-large.jpg",
+  "widgetUrl": "https://w.soundcloud.com/player/?url=...",
+  "pistas": [],
+  "fuente": "oembed"
+}
+```
+
+Si el artista no tiene perfil o SoundCloud no responde:
+
+```text
+404 Not Found
+```
+
+La respuesta se guarda en caché 24 horas por artista: si cambias la
+`soundcloudUrl`, reinicia el backend para ver el cambio de inmediato.
+
+---
+
 ## 4. Probar casos de error
 
 Todos los errores de la API devuelven el mismo formato de respuesta:
@@ -830,6 +894,7 @@ Para las solicitudes que utilizan IDs en la URL, reemplazar los valores de ejemp
 | `/conciertos/{id}`                       | GET    | `200 OK`         | `404 Not Found`                                    |
 | `/conciertos/{id}`                       | PUT    | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
 | `/conciertos/{id}`                       | DELETE | `204 No Content` | `404 Not Found`                                    |
+| `/artistas/{nombre}/soundcloud`          | GET    | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
 
 ### Descripción de los errores
 
@@ -839,7 +904,7 @@ La petición contiene datos faltantes, un formato incorrecto, un campo que no pe
 
 **404 Not Found**
 
-El recurso solicitado no existe, por ejemplo, cuando se consulta un usuario o un concierto que no están registrados, o se intenta quitar un favorito que no pertenece al usuario.
+El recurso solicitado no existe, por ejemplo, cuando se consulta un usuario o un concierto que no están registrados, o se intenta quitar un favorito que no pertenece al usuario. En `/artistas/{nombre}/soundcloud` también se responde `404` cuando el artista no tiene perfil en SoundCloud o SoundCloud no respondió.
 
 **409 Conflict**
 
