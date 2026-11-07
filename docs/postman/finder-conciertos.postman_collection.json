@@ -681,7 +681,7 @@
                 "soundcloud"
               ]
             },
-            "description": "Público. Responde 200 si algún concierto del artista tiene soundcloudUrl y 404 con el formato de error común si no. Ver ADR-005."
+            "description": "Público. Responde 200 si el artista tiene perfil en SoundCloud (con credenciales, o con soundcloudUrl guardada en un concierto) y 404 con el formato de error común si no. Ver ADR-005."
           },
           "event": [
             {

@@ -624,11 +624,16 @@ curl -i "http://localhost:8080/api/v1/artistas/Queen/soundcloud"
 Los nombres con espacios van codificados en la URL, por ejemplo
 `/artistas/Bad%20Bunny/soundcloud`. El nombre no distingue mayúsculas.
 
-El backend busca la `soundcloudUrl` guardada en algún concierto del
-artista y le pide a SoundCloud el reproductor con su endpoint público
-oEmbed (ver ADR-005). Con los datos de prueba ningún concierto la tiene,
-así que la primera llamada responde `404`. Para probarlo, agrégala a un
-concierto con `PUT /conciertos/{id}` (requiere token, ver 3.11):
+Cómo responde depende de la configuración (ver ADR-005):
+
+- **Con credenciales** (`SOUNDCLOUD_CLIENT_ID` y `SOUNDCLOUD_CLIENT_SECRET`
+  definidas): busca al artista en la API de SoundCloud y regresa su perfil
+  con sus pistas más escuchadas (`"fuente": "api"`).
+- **Sin credenciales**: usa la `soundcloudUrl` guardada en algún concierto
+  del artista y regresa solo el reproductor (`"fuente": "oembed"`, `pistas`
+  vacía). Con los datos de prueba ningún concierto la tiene, así que la
+  primera llamada responde `404`. Para probarlo, agrégala a un concierto
+  con `PUT /conciertos/{id}` (requiere token, ver 3.11):
 
   ```bash
   curl -X PUT http://localhost:8080/api/v1/conciertos/1 \
@@ -655,8 +660,10 @@ Respuesta esperada:
   "perfilUrl": "https://soundcloud.com/URL-DEL-ARTISTA",
   "avatarUrl": "https://i1.sndcdn.com/avatars-...-large.jpg",
   "widgetUrl": "https://w.soundcloud.com/player/?url=...",
-  "pistas": [],
-  "fuente": "oembed"
+  "pistas": [
+    { "titulo": "Nombre de la pista", "url": "https://soundcloud.com/...", "duracionMs": 354000 }
+  ],
+  "fuente": "api"
 }
 ```
 

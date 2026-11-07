@@ -37,7 +37,7 @@ el mismo PR.
 | Registro, consulta, edición y baja de perfil | Listo | Listo |
 | Marcar y quitar conciertos favoritos | Listo | Listo |
 | Login con contraseña y token JWT | Listo | Listo |
-| Escuchar al artista en SoundCloud | Listo, sin credenciales (#81) | Listo (#82) |
+| Escuchar al artista en SoundCloud | Listo (#81) | Listo (#82) |
 | Integración continua | Listo | — |
 | Configuración de CORS | Listo | — |
 
@@ -141,6 +141,12 @@ Con las opciones B o C, pon tus datos antes del comando:
 ```bash
 DB_URL=jdbc:postgresql://localhost:5432/finder_conciertos DB_USER=tu_usuario DB_PASSWORD=tu_password ./mvnw spring-boot:run
 ```
+
+Las variables que acepta el backend están documentadas, con valores de
+ejemplo, en [`.env.example`](.env.example). Las de SoundCloud
+(`SOUNDCLOUD_CLIENT_ID` y `SOUNDCLOUD_CLIENT_SECRET`) son opcionales: sin
+ellas, el reproductor del artista usa el endpoint público oEmbed (ver
+[ADR-005](docs/adr/005-integracion-con-soundcloud.md)).
 
 <details>
 <summary>Cómo pasar las variables desde IntelliJ</summary>

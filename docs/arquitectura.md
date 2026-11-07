@@ -13,7 +13,7 @@ ADR-002 y ADR-003):
 flowchart LR
     UI["Interfaz web<br/>(SPA con Vue, frontend/)"] -- "HTTP/JSON<br/>/api/v1" --> API["Backend<br/>(Spring Boot, src/)"]
     API --> DB[("PostgreSQL")]
-    API -- "HTTPS<br/>oEmbed" --> SC["SoundCloud"]
+    API -- "HTTPS<br/>API o oEmbed" --> SC["SoundCloud"]
     UI -. "iframe del reproductor" .-> SC
 ```
 
@@ -22,10 +22,9 @@ flowchart LR
 - El **backend** concentra toda la lógica de negocio, las validaciones y
   el acceso a datos. Es la fuente de verdad.
 - **SoundCloud** es el único servicio externo (ADR-005). Solo el backend
-  le pide datos (así puede guardarlos en caché y, más adelante, usar
-  credenciales sin exponerlas); la interfaz únicamente carga el
-  reproductor embebido de SoundCloud en un `iframe` con la URL que le da
-  el backend.
+  le pide datos, porque las credenciales no pueden llegar al navegador; la
+  interfaz únicamente carga el reproductor embebido de SoundCloud en un
+  `iframe` con la URL que le da el backend.
 - El **contrato** `src/main/resources/static/openapi.yml` es el acuerdo
   entre las dos partes: si un endpoint cambia, primero se cambia el
   contrato.
@@ -57,7 +56,7 @@ com.memelomanos.finderconciertos
 ├── model/
 ├── exception/
 └── integracion/
-    └── soundcloud/   cliente de oEmbed, configuración y respuesta
+    └── soundcloud/   clientes de la API y de oEmbed, configuración y respuesta
 ```
 
 Las entidades y sus relaciones están descritas en la página
@@ -117,25 +116,34 @@ Para agregar un caso nuevo, crea la excepción en `exception/` y añade un
 ### Integración con SoundCloud
 
 `GET /api/v1/artistas/{nombre}/soundcloud` lo atiende `ArtistaController`,
-que llama a `ArtistaService` (ADR-005):
+que llama a `ArtistaService`. El servicio decide qué plan usar (ADR-005):
 
 ```mermaid
 flowchart TD
     A["ArtistaService.obtenerSoundCloud(nombre)"] --> C{"¿Está en la caché<br/>y no han pasado 24 h?"}
     C -- sí --> R["200 + ArtistaSoundCloud"]
-    C -- no --> PB["soundcloudUrl del concierto<br/>+ SoundCloudOEmbedCliente"]
-    PB -- "encontrado" --> G["Guardar en caché"] --> R
+    C -- no --> K{"¿Hay credenciales?"}
+    K -- sí --> PA["Plan A: SoundCloudCliente<br/>token Client Credentials + /users + /tracks"]
+    K -- no --> PB
+    PA -- "encontrado" --> G["Guardar en caché"] --> R
+    PA -- "no encontrado o falla" --> PB["Plan B: soundcloudUrl del concierto<br/>+ SoundCloudOEmbedCliente"]
+    PB -- "encontrado" --> G
     PB -- "sin URL o falla" --> E["404 + ErrorRespuesta"]
 ```
 
+- **Token:** `SoundCloudCliente` guarda el token en memoria y lo reutiliza
+  hasta un minuto antes de que venza; después lo renueva con el refresh
+  token. SoundCloud solo da 50 tokens nuevos cada 12 horas por app.
 - **Caché:** `ArtistaService` guarda cada respuesta exitosa por artista
   (`soundcloud.duracion-cache`, 24 h por defecto), con un tope de 500
   artistas. Las fallas no se guardan, para reintentar en la siguiente
   petición.
-- **Errores:** cualquier falla de SoundCloud (timeout de 5 s, `404` de
-  oEmbed) se registra en el log y termina en `404`, nunca en `500`.
-- **Seguridad:** de oEmbed se toma únicamente la URL del widget oficial
-  (`https://w.soundcloud.com/player/`), no su HTML.
+- **Errores:** cualquier falla de SoundCloud (timeout de 5 s, `401`, `429`)
+  se registra en el log y termina en `404`, nunca en `500`.
+- **Seguridad:** el `client_secret` solo vive en variables de entorno y en
+  `SoundCloudPropiedades`, cuyo `toString` no lo imprime. La respuesta solo
+  trae datos públicos, y de oEmbed se toma únicamente la URL del widget
+  oficial (`https://w.soundcloud.com/player/`), no su HTML.
 
 ### Prefijo `/api/v1`
 
