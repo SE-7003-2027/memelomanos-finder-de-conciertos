@@ -16,6 +16,13 @@ jwt:
   secret: ${JWT_SECRET:clave_secreta_por_defecto_para_desarrollo_local_de_al_menos_256_bits_memelomanos_finder_conciertos}
   expiration-ms: 86400000 # 24 horas
 
+# Integracion con SoundCloud (ADR-005). Usa oEmbed con la soundcloudUrl
+# guardada en los conciertos; no necesita credenciales.
+soundcloud:
+  oembed-url: https://soundcloud.com/oembed
+  duracion-cache: 24h
+  timeout: 5s
+
 springdoc:
   swagger-ui:
     # Apunta al contrato escrito a mano (src/main/resources/static/openapi.yml),
