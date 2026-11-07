@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { obtenerConcierto } from '@/api/conciertos'
 import BotonFavorito from '@/components/BotonFavorito.vue'
+import ReproductorSoundCloud from '@/components/ReproductorSoundCloud.vue'
 import { formatearFecha } from '@/utils/fechas'
 
 const route = useRoute()
@@ -83,37 +84,48 @@ watch(
         </p>
       </div>
 
-      <article v-else-if="concierto" class="tarjeta detalle">
-        <header class="cabecera">
-          <span class="ciudad">{{ concierto.ciudad }}</span>
-          <h1>{{ concierto.artista }}</h1>
-        </header>
+      <template v-else-if="concierto">
+        <article class="tarjeta detalle">
+          <header class="cabecera">
+            <span class="ciudad">{{ concierto.ciudad }}</span>
+            <h1>{{ concierto.artista }}</h1>
+          </header>
 
-        <dl class="datos">
-          <div>
-            <dt>Fecha</dt>
-            <dd>
-              <time :datetime="concierto.fecha">
-                {{ formatearFecha(concierto.fecha) }}
-              </time>
-            </dd>
-          </div>
+          <dl class="datos">
+            <div>
+              <dt>Fecha</dt>
+              <dd>
+                <time :datetime="concierto.fecha">
+                  {{ formatearFecha(concierto.fecha) }}
+                </time>
+              </dd>
+            </div>
 
-          <div>
-            <dt>Lugar</dt>
-            <dd>{{ concierto.lugar }}</dd>
-          </div>
-        </dl>
+            <div>
+              <dt>Lugar</dt>
+              <dd>{{ concierto.lugar }}</dd>
+            </div>
+          </dl>
 
-        <footer class="acciones">
-          <BotonFavorito :concierto="concierto" />
-        </footer>
-      </article>
+          <footer class="acciones">
+            <BotonFavorito :concierto="concierto" />
+          </footer>
+        </article>
+
+        <!-- Va aparte del artículo: si SoundCloud falla, el detalle no cambia (#82). -->
+        <ReproductorSoundCloud :artista="concierto.artista" />
+      </template>
     </section>
   </div>
 </template>
 
 <style scoped>
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .volver {
   align-self: flex-start;
 }
