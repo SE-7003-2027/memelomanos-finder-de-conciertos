@@ -47,14 +47,16 @@ public class ConfiguracionSeguridad {
                         .requestMatchers(HttpMethod.POST, "/usuarios/registro", "/usuarios/login").permitAll()
                         // 2. Consulta de conciertos publica
                         .requestMatchers(HttpMethod.GET, "/api/v1/conciertos/**", "/conciertos/**").permitAll()
-                        // 3. Documentacion Swagger / OpenAPI publica
+                        // 3. Perfil de SoundCloud del artista publico (#81)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/artistas/**", "/artistas/**").permitAll()
+                        // 4. Documentacion Swagger / OpenAPI publica
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/openapi.yml"
                         ).permitAll()
-                        // 4. Todo lo demas requiere token JWT valido
+                        // 5. Todo lo demas requiere token JWT valido
                         .anyRequest().authenticated()
                 )
                 // Agregar el filtro JWT antes del filtro estandar de Spring Security

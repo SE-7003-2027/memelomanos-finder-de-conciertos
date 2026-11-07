@@ -111,5 +111,6 @@ public class ConciertoService {
         concierto.setFecha(request.getFecha());
         concierto.setCiudad(request.getCiudad());
         concierto.setLugar(request.getLugar());
+        concierto.setSoundcloudUrl(request.getSoundcloudUrl());
     }
 }

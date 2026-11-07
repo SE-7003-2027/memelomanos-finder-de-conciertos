@@ -19,11 +19,13 @@ y facilita guardar conciertos de interés en un perfil personal.
 
 - Un usuario puede buscar conciertos por artista, ciudad o fecha
 - Un usuario puede crear un perfil y guardar conciertos de su interés.
+- Un usuario puede escuchar al artista desde el detalle de un concierto, sin salir de la página (SoundCloud, ver ADR-005).
 
 **Fuera de alcance (por ahora):**
 
 - Venta o compra de boletos dentro de la plataforma
 - Integración con redes sociales
+- Conectar la cuenta de SoundCloud del usuario (likes, playlists o seguir artistas): solo se usan datos públicos
 
 ## User stories / requerimientos
 
@@ -34,6 +36,7 @@ y facilita guardar conciertos de interés en un perfil personal.
 - Como usuario autenticado, quiero guardar conciertos como favoritos para consultarlos después.
 - Como usuario autenticado, quiero consultar y administrar mi lista de conciertos favoritos.
 - Como usuario, quiero consultar los detalles de un concierto para conocer la información del evento.
+- Como usuario, quiero escuchar al artista desde el detalle del concierto para decidir si me interesa ir.
 
 ## Métricas de éxito
 
@@ -42,6 +45,7 @@ y facilita guardar conciertos de interés en un perfil personal.
 - Los conciertos almacenados en la base de datos deben poder consultarse sin errores.
 - Un usuario debe poder agregar, consultar y quitar conciertos de su lista de favoritos.
 - El inicio de sesión debe funcionar y las rutas protegidas deben rechazar solicitudes sin un token válido.
+- Si SoundCloud no tiene datos del artista o no responde, el detalle del concierto se sigue mostrando sin errores.
 
 ## Restricciones y supuestos
 
@@ -49,3 +53,4 @@ y facilita guardar conciertos de interés en un perfil personal.
 - Proyecto académico con fecha de entrega ligada al calendario del curso.
 - Equipo de 5 personas, con disponibilidad limitada por otras materias.
 - No se ha confirmado el uso de una API externa de conciertos. Si se integra una, será necesario revisar sus condiciones de uso, disponibilidad y límites de solicitudes.
+- SoundCloud reemplaza a Spotify como fuente de música (ADR-005). Registrar una app en su API requiere una cuenta con Artist Pro y limita los tokens a 50 cada 12 horas; sin credenciales se usa su endpoint público oEmbed con la URL del artista capturada a mano.
