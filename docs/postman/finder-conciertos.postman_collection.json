@@ -663,6 +663,51 @@
       ]
     },
     {
+      "name": "Artistas",
+      "item": [
+        {
+          "name": "Perfil de SoundCloud del artista",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/artistas/Queen/soundcloud",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "artistas",
+                "Queen",
+                "soundcloud"
+              ]
+            },
+            "description": "Público. Responde 200 si el artista tiene perfil en SoundCloud (con credenciales, o con soundcloudUrl guardada en un concierto) y 404 con el formato de error común si no. Ver ADR-005."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 o 404, nunca 500\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "pm.test(\"Trae widgetUrl o el formato de error\", function () {",
+                  "    const cuerpo = pm.response.json();",
+                  "    if (pm.response.code === 200) {",
+                  "        pm.expect(cuerpo.widgetUrl).to.include(\"https://w.soundcloud.com/player/\");",
+                  "    } else {",
+                  "        pm.expect(cuerpo.status).to.eql(404);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Limpieza",
       "item": [
         {

@@ -13,12 +13,18 @@ ADR-002 y ADR-003):
 flowchart LR
     UI["Interfaz web<br/>(SPA con Vue, frontend/)"] -- "HTTP/JSON<br/>/api/v1" --> API["Backend<br/>(Spring Boot, src/)"]
     API --> DB[("PostgreSQL")]
+    API -- "HTTPS<br/>API o oEmbed" --> SC["SoundCloud"]
+    UI -. "iframe del reproductor" .-> SC
 ```
 
 - La **interfaz** solo habla con la API por HTTP. No tiene acceso a la
   base de datos ni a las clases del backend.
 - El **backend** concentra toda la lógica de negocio, las validaciones y
   el acceso a datos. Es la fuente de verdad.
+- **SoundCloud** es el único servicio externo (ADR-005). Solo el backend
+  le pide datos, porque las credenciales no pueden llegar al navegador; la
+  interfaz únicamente carga el reproductor embebido de SoundCloud en un
+  `iframe` con la URL que le da el backend.
 - El **contrato** `src/main/resources/static/openapi.yml` es el acuerdo
   entre las dos partes: si un endpoint cambia, primero se cambia el
   contrato.
@@ -38,6 +44,7 @@ responsabilidades:
 | Model | `model` | Entidades (`Concierto`, `Usuario`) y cuerpos de petición (`RegistroRequest`, `FavoritoRequest`, `ConciertoRequest`) |
 | Exception | `exception` | Excepciones del dominio y manejador global de errores |
 | Config | `config` | Prefijo `/api/v1` y datos de prueba |
+| Integración | `integracion` | Clientes HTTP de servicios externos. Hoy solo `integracion/soundcloud` (ADR-005) |
 
 ```
 com.memelomanos.finderconciertos
@@ -47,7 +54,9 @@ com.memelomanos.finderconciertos
 ├── service/
 ├── repository/
 ├── model/
-└── exception/
+├── exception/
+└── integracion/
+    └── soundcloud/   clientes de la API y de oEmbed, configuración y respuesta
 ```
 
 Las entidades y sus relaciones están descritas en la página
@@ -95,6 +104,7 @@ con un formato común (`ErrorRespuesta`: `status`, `error`, `mensaje`,
 | Excepción | Respuesta |
 | --------- | --------- |
 | `UsuarioNoEncontradoException`, `ConciertoNoEncontradoException` | `404 Not Found` |
+| `ArtistaSinSoundCloudException` (sin perfil o SoundCloud no respondió) | `404 Not Found` |
 | `CorreoDuplicadoException` | `409 Conflict` |
 | `MethodArgumentNotValidException` (falla `@Valid`) | `400 Bad Request` |
 | `MissingServletRequestParameterException` (falta un parámetro) | `400 Bad Request` |
@@ -102,6 +112,38 @@ con un formato común (`ErrorRespuesta`: `status`, `error`, `mensaje`,
 
 Para agregar un caso nuevo, crea la excepción en `exception/` y añade un
 `@ExceptionHandler` en el manejador.
+
+### Integración con SoundCloud
+
+`GET /api/v1/artistas/{nombre}/soundcloud` lo atiende `ArtistaController`,
+que llama a `ArtistaService`. El servicio decide qué plan usar (ADR-005):
+
+```mermaid
+flowchart TD
+    A["ArtistaService.obtenerSoundCloud(nombre)"] --> C{"¿Está en la caché<br/>y no han pasado 24 h?"}
+    C -- sí --> R["200 + ArtistaSoundCloud"]
+    C -- no --> K{"¿Hay credenciales?"}
+    K -- sí --> PA["Plan A: SoundCloudCliente<br/>token Client Credentials + /users + /tracks"]
+    K -- no --> PB
+    PA -- "encontrado" --> G["Guardar en caché"] --> R
+    PA -- "no encontrado o falla" --> PB["Plan B: soundcloudUrl del concierto<br/>+ SoundCloudOEmbedCliente"]
+    PB -- "encontrado" --> G
+    PB -- "sin URL o falla" --> E["404 + ErrorRespuesta"]
+```
+
+- **Token:** `SoundCloudCliente` guarda el token en memoria y lo reutiliza
+  hasta un minuto antes de que venza; después lo renueva con el refresh
+  token. SoundCloud solo da 50 tokens nuevos cada 12 horas por app.
+- **Caché:** `ArtistaService` guarda cada respuesta exitosa por artista
+  (`soundcloud.duracion-cache`, 24 h por defecto), con un tope de 500
+  artistas. Las fallas no se guardan, para reintentar en la siguiente
+  petición.
+- **Errores:** cualquier falla de SoundCloud (timeout de 5 s, `401`, `429`)
+  se registra en el log y termina en `404`, nunca en `500`.
+- **Seguridad:** el `client_secret` solo vive en variables de entorno y en
+  `SoundCloudPropiedades`, cuyo `toString` no lo imprime. La respuesta solo
+  trae datos públicos, y de oEmbed se toma únicamente la URL del widget
+  oficial (`https://w.soundcloud.com/player/`), no su HTML.
 
 ### Prefijo `/api/v1`
 
@@ -159,7 +201,7 @@ frontend/src/
 
 ## Pendientes de arquitectura
 
-Las decisiones abiertas (autenticación, migraciones de base de datos,
-origen de los datos y despliegue) están listadas en la página
+Las decisiones abiertas (migraciones de base de datos, origen de los
+datos de conciertos y despliegue) están listadas en la página
 [Decisiones de arquitectura](https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos/wiki/Decisiones-de-arquitectura)
 de la wiki.

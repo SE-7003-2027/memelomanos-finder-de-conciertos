@@ -6,10 +6,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
 
-// Entidad que representa un concierto. Por ahora solo tiene los
-// campos basicos que definimos en el PRD (artista, fecha, ciudad,
-// lugar). El campo artista esta pensado para que el issue de
-// busqueda (#14) pueda filtrar directo por el.
+// Entidad que representa un concierto. Tiene los campos basicos que
+// definimos en el PRD (artista, fecha, ciudad, lugar). El campo artista
+// esta pensado para que el issue de busqueda (#14) pueda filtrar directo
+// por el. soundcloudUrl es opcional: es el perfil de SoundCloud del
+// artista y se usa cuando no hay credenciales de la API (ADR-005, #81).
 @Entity
 public class Concierto {
 
@@ -21,6 +22,7 @@ public class Concierto {
     private LocalDate fecha;
     private String ciudad;
     private String lugar;
+    private String soundcloudUrl;
 
     // JPA necesita un constructor vacio para poder crear los objetos
     // cuando lee de la base de datos.
@@ -68,6 +70,14 @@ public class Concierto {
 
     public void setLugar(String lugar) {
         this.lugar = lugar;
+    }
+
+    public String getSoundcloudUrl() {
+        return soundcloudUrl;
+    }
+
+    public void setSoundcloudUrl(String soundcloudUrl) {
+        this.soundcloudUrl = soundcloudUrl;
     }
 
     // Sin esto, dos objetos Concierto que representan la misma fila

@@ -156,6 +156,52 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
+  # Artistas
+  /artistas/{nombre}/soundcloud:
+    get:
+      summary: Obtener el perfil de SoundCloud de un artista
+      description: >
+        Devuelve el perfil del artista en SoundCloud y la URL del reproductor
+        embebible. Si el backend tiene credenciales de la API de SoundCloud
+        (Plan A de ADR-005) busca al artista por nombre y agrega sus pistas
+        más escuchadas (máximo 5). Si no, usa el endpoint público oEmbed con
+        la `soundcloudUrl` guardada en los conciertos de ese artista (Plan B)
+        y la lista de pistas viene vacía.
+        Las respuestas se guardan en caché por artista durante 24 horas.
+        Las credenciales de SoundCloud nunca se incluyen en la respuesta.
+      tags:
+        - Artistas
+      parameters:
+        - name: nombre
+          in: path
+          description: Nombre del artista tal como aparece en el concierto (no distingue mayúsculas)
+          required: true
+          schema:
+            type: string
+          example: Queen
+      responses:
+        '200':
+          description: Perfil de SoundCloud encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistaSoundCloud'
+        '400':
+          $ref: '#/components/responses/PeticionInvalida'
+        '404':
+          description: >
+            El artista no tiene perfil en SoundCloud, o SoundCloud no respondió.
+            Nunca se responde 500 por una falla de SoundCloud.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 404
+                error: Not Found
+                mensaje: No encontramos a Queen en SoundCloud
+                timestamp: "2026-11-07T12:00:00"
+
   # Usuarios
   /usuarios/registro:
     post:
@@ -658,6 +704,10 @@ components:
         lugar:
           type: string
           description: Recinto o lugar del evento
+        soundcloudUrl:
+          type: string
+          nullable: true
+          description: Perfil del artista en SoundCloud (opcional, ver ADR-005)
     
     ConciertoRequest:
       type: object
@@ -688,11 +738,19 @@ components:
           description: Recinto o lugar del evento
           minLength: 1
           pattern: '\S'
+        soundcloudUrl:
+          type: string
+          nullable: true
+          description: >
+            Opcional. Perfil del artista en SoundCloud. Se usa para mostrar el
+            reproductor cuando no hay credenciales de la API (Plan B de ADR-005).
+          pattern: '^https://(www\.|m\.)?soundcloud\.com/\S+$'
       example:
         artista: Queen
         fecha: '2027-02-20'
         ciudad: CDMX
         lugar: Auditorio Nacional
+        soundcloudUrl: https://soundcloud.com/ejemplo-artista
 
     Usuario:
       type: object
@@ -728,3 +786,57 @@ components:
           description: Lista de géneros musicales asociados al artista
           items:
             type: string
+
+    ArtistaSoundCloud:
+      type: object
+      description: Perfil público de un artista en SoundCloud
+      properties:
+        artista:
+          type: string
+          description: Nombre del artista en SoundCloud
+        perfilUrl:
+          type: string
+          format: uri
+          description: URL del perfil en soundcloud.com
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL de la imagen de perfil, si SoundCloud la regresa
+        widgetUrl:
+          type: string
+          format: uri
+          description: URL del reproductor embebible (https://w.soundcloud.com/player/...) para usar en un iframe
+        pistas:
+          type: array
+          description: Pistas más escuchadas (máximo 5). Vacía cuando la respuesta viene de oEmbed
+          items:
+            $ref: '#/components/schemas/PistaSoundCloud'
+        fuente:
+          type: string
+          enum: [api, oembed]
+          description: De dónde salieron los datos (Plan A o Plan B de ADR-005)
+      example:
+        artista: Queen
+        perfilUrl: https://soundcloud.com/ejemplo-artista
+        avatarUrl: https://i1.sndcdn.com/avatars-000000000000-large.jpg
+        widgetUrl: https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fejemplo-artista&show_comments=false&visual=false
+        pistas:
+          - titulo: Ejemplo de pista
+            url: https://soundcloud.com/ejemplo-artista/ejemplo-de-pista
+            duracionMs: 354000
+        fuente: api
+
+    PistaSoundCloud:
+      type: object
+      properties:
+        titulo:
+          type: string
+        url:
+          type: string
+          format: uri
+          description: URL de la pista en soundcloud.com
+        duracionMs:
+          type: integer
+          format: int64
+          description: Duración en milisegundos
