@@ -37,7 +37,7 @@ el mismo PR.
 | Registro, consulta, edición y baja de perfil | Listo | Listo |
 | Marcar y quitar conciertos favoritos | Listo | Listo |
 | Login con contraseña y token JWT | Listo | Listo |
-| Escuchar al artista en SoundCloud | Listo, sin credenciales (#81) | En curso (#82) |
+| Escuchar al artista en SoundCloud | Listo, sin credenciales (#81) | Listo (#82) |
 | Integración continua | Listo | — |
 | Configuración de CORS | Listo | — |
 
