@@ -40,7 +40,8 @@ class SoundCloudOEmbedClienteTest {
         RestClient.Builder builder = RestClient.builder();
         servidor = MockRestServiceServer.bindTo(builder).build();
         SoundCloudPropiedades propiedades = new SoundCloudPropiedades(
-                "https://soundcloud.com/oembed", Duration.ofHours(24), Duration.ofSeconds(5));
+                null, null, "https://api.soundcloud.com", "https://secure.soundcloud.com",
+                "https://soundcloud.com/oembed", 5, Duration.ofHours(24), Duration.ofSeconds(5));
         cliente = new SoundCloudOEmbedCliente(builder.build(), propiedades);
     }
 
