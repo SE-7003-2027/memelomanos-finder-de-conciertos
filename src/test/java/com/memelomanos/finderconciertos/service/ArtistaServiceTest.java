@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.when;
 import com.memelomanos.finderconciertos.RelojDePrueba;
 import com.memelomanos.finderconciertos.exception.ArtistaSinSoundCloudException;
 import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud;
+import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudOEmbedCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudPropiedades;
 import com.memelomanos.finderconciertos.model.Concierto;
@@ -30,9 +32,12 @@ class ArtistaServiceTest {
 
     private static final String PERFIL = "https://soundcloud.com/queen";
 
+    private final ArtistaSoundCloud desdeApi = new ArtistaSoundCloud(
+            "Queen", PERFIL, null, "https://w.soundcloud.com/player/?url=api", List.of(), "api");
     private final ArtistaSoundCloud desdeOEmbed = new ArtistaSoundCloud(
             "Queen", PERFIL, null, "https://w.soundcloud.com/player/?url=oembed", List.of(), "oembed");
 
+    private SoundCloudCliente api;
     private SoundCloudOEmbedCliente oEmbed;
     private ConciertoRepository conciertoRepository;
     private RelojDePrueba reloj;
@@ -40,12 +45,13 @@ class ArtistaServiceTest {
 
     @BeforeEach
     void setUp() {
+        api = mock(SoundCloudCliente.class);
         oEmbed = mock(SoundCloudOEmbedCliente.class);
         conciertoRepository = mock(ConciertoRepository.class);
         reloj = new RelojDePrueba(Instant.parse("2026-11-07T12:00:00Z"));
         SoundCloudPropiedades propiedades = new SoundCloudPropiedades(
-                null, Duration.ofHours(24), Duration.ofSeconds(5));
-        servicio = new ArtistaService(oEmbed, conciertoRepository, propiedades, reloj);
+                null, null, null, null, null, 5, Duration.ofHours(24), Duration.ofSeconds(5));
+        servicio = new ArtistaService(api, oEmbed, conciertoRepository, propiedades, reloj);
     }
 
     private void conPerfilGuardado() {
@@ -56,17 +62,41 @@ class ArtistaServiceTest {
     }
 
     @Test
-    @DisplayName("Usa oEmbed con la URL guardada en los conciertos")
-    void obtener_ConUrlGuardada_UsaOEmbed() {
+    @DisplayName("Usa la API cuando hay credenciales (Plan A)")
+    void obtener_ConCredenciales_UsaApi() {
+        when(api.estaConfigurado()).thenReturn(true);
+        when(api.buscarArtista("Queen")).thenReturn(Optional.of(desdeApi));
+
+        assertThat(servicio.obtenerSoundCloud(" Queen ")).isEqualTo(desdeApi);
+        verify(oEmbed, never()).obtenerReproductor(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Sin credenciales usa oEmbed con la URL guardada (Plan B)")
+    void obtener_SinCredenciales_UsaOEmbed() {
+        when(api.estaConfigurado()).thenReturn(false);
         conPerfilGuardado();
         when(oEmbed.obtenerReproductor("Queen", PERFIL)).thenReturn(Optional.of(desdeOEmbed));
 
-        assertThat(servicio.obtenerSoundCloud(" Queen ")).isEqualTo(desdeOEmbed);
+        assertThat(servicio.obtenerSoundCloud("Queen")).isEqualTo(desdeOEmbed);
+        verify(api, never()).buscarArtista(anyString());
+    }
+
+    @Test
+    @DisplayName("Si la API falla, cae al Plan B en lugar de responder 500")
+    void obtener_ApiFalla_UsaOEmbed() {
+        when(api.estaConfigurado()).thenReturn(true);
+        when(api.buscarArtista("Queen")).thenThrow(new RestClientException("429 Too Many Requests"));
+        conPerfilGuardado();
+        when(oEmbed.obtenerReproductor("Queen", PERFIL)).thenReturn(Optional.of(desdeOEmbed));
+
+        assertThat(servicio.obtenerSoundCloud("Queen")).isEqualTo(desdeOEmbed);
     }
 
     @Test
     @DisplayName("Lanza ArtistaSinSoundCloudException si no hay perfil")
     void obtener_SinPerfil_Lanza404() {
+        when(api.estaConfigurado()).thenReturn(false);
         when(conciertoRepository.findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull("Nadie"))
                 .thenReturn(Optional.empty());
 
@@ -76,8 +106,9 @@ class ArtistaServiceTest {
     }
 
     @Test
-    @DisplayName("Si SoundCloud falla responde 404, no 500")
+    @DisplayName("Si oEmbed falla tambien responde 404, no 500")
     void obtener_OEmbedFalla_Lanza404() {
+        when(api.estaConfigurado()).thenReturn(false);
         conPerfilGuardado();
         when(oEmbed.obtenerReproductor("Queen", PERFIL))
                 .thenThrow(new RestClientException("Connection timed out"));
@@ -89,21 +120,18 @@ class ArtistaServiceTest {
     @Test
     @DisplayName("Guarda la respuesta en cache por 24 horas")
     void obtener_UsaCacheHastaQueVence() {
-        Concierto concierto = new Concierto("Queen", LocalDate.of(2026, 11, 20), "CDMX", "Foro Sol");
-        concierto.setSoundcloudUrl(PERFIL);
-        when(conciertoRepository.findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull(anyString()))
-                .thenReturn(Optional.of(concierto));
-        when(oEmbed.obtenerReproductor(anyString(), anyString())).thenReturn(Optional.of(desdeOEmbed));
+        when(api.estaConfigurado()).thenReturn(true);
+        when(api.buscarArtista(anyString())).thenReturn(Optional.of(desdeApi));
 
         servicio.obtenerSoundCloud("Queen");
         servicio.obtenerSoundCloud("QUEEN");
         reloj.avanzar(Duration.ofHours(23));
         servicio.obtenerSoundCloud("queen");
-        verify(oEmbed, times(1)).obtenerReproductor(anyString(), anyString());
+        verify(api, times(1)).buscarArtista(anyString());
 
         reloj.avanzar(Duration.ofHours(2));
         servicio.obtenerSoundCloud("Queen");
-        verify(oEmbed, times(2)).obtenerReproductor(anyString(), anyString());
+        verify(api, times(2)).buscarArtista(anyString());
     }
 
     @Test
