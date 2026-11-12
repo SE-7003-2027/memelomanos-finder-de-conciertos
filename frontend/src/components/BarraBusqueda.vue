@@ -13,6 +13,8 @@ const emit = defineEmits(['buscar'])
 const filtros = reactive({
   artista: '',
   ciudad: '',
+  fechaDesde: '',
+  fechaHasta: '',
 })
 
 function enviar() {
@@ -21,6 +23,8 @@ function enviar() {
   emit('buscar', {
     artista: filtros.artista.trim(),
     ciudad: filtros.ciudad.trim(),
+    fechaDesde: filtros.fechaDesde,
+    fechaHasta: filtros.fechaHasta,
   })
 }
 </script>
@@ -54,6 +58,26 @@ function enviar() {
       />
     </div>
 
+    <div class="campo">
+      <label for="buscar-fecha-desde">Desde</label>
+      <input
+        id="buscar-fecha-desde"
+        v-model="filtros.fechaDesde"
+        type="date"
+        :disabled="cargando"
+      />
+    </div>
+
+    <div class="campo">
+      <label for="buscar-fecha-hasta">Hasta</label>
+      <input
+        id="buscar-fecha-hasta"
+        v-model="filtros.fechaHasta"
+        type="date"
+        :disabled="cargando"
+      />
+    </div>
+
     <button
       type="submit"
       class="boton boton-primario"
@@ -67,7 +91,7 @@ function enviar() {
 <style scoped>
 .buscador {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 16px;
   align-items: end;
 }
@@ -79,6 +103,12 @@ function enviar() {
 .campo input {
   width: 100%;
   min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .buscador {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 600px) {
