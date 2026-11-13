@@ -14,3 +14,8 @@ export function buscarConciertos({ artista, ciudad } = {}) {
 export function obtenerConcierto(id) {
   return pedir(`/conciertos/${encodeURIComponent(id)}`)
 }
+
+/** GET /conciertos/{id}/superboletos */
+export function obtenerUrlSuperboletos(id) {
+  return pedir(`/conciertos/${encodeURIComponent(id)}/superboletos`)
+}

@@ -1,9 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { obtenerConcierto } from '@/api/conciertos'
 import BotonFavorito from '@/components/BotonFavorito.vue'
 import { formatearFecha } from '@/utils/fechas'
+import { obtenerConcierto, obtenerUrlSuperboletos } from '@/api/conciertos'
 
 const route = useRoute()
 
@@ -11,6 +11,8 @@ const concierto = ref(null)
 const cargando = ref(true)
 const noEncontrado = ref(false)
 const error = ref('')
+const urlSuperboletos = ref('')
+const errorSuperboletos = ref('')
 
 watch(
   () => route.params.id,
@@ -26,26 +28,42 @@ watch(
     noEncontrado.value = false
     error.value = ''
     concierto.value = null
+    urlSuperboletos.value = ''
+    errorSuperboletos.value = ''
 
-    try {
-      const datos = await obtenerConcierto(id)
 
-      if (vigente) {
-        concierto.value = datos
-      }
-    } catch (e) {
-      if (!vigente) return
+try {
+  const datos = await obtenerConcierto(id)
 
-      if (e.status === 404) {
-        noEncontrado.value = true
-      } else {
-        error.value = e.message
-      }
-    } finally {
-      if (vigente) {
-        cargando.value = false
-      }
+  if (!vigente) return
+
+  concierto.value = datos
+  cargando.value = false
+
+  try {
+    const resultado = await obtenerUrlSuperboletos(id)
+
+    if (vigente) {
+      urlSuperboletos.value = resultado.urlBusqueda
     }
+  } catch (e) {
+    if (vigente) {
+      errorSuperboletos.value = e.message
+    }
+  }
+} catch (e) {
+  if (!vigente) return
+
+  if (e.status === 404) {
+    noEncontrado.value = true
+  } else {
+    error.value = e.message
+  }
+} finally {
+  if (vigente) {
+    cargando.value = false
+  }
+}
   },
   { immediate: true },
 )
@@ -107,6 +125,19 @@ watch(
 
         <footer class="acciones">
           <BotonFavorito :concierto="concierto" />
+            <a
+            v-if="urlSuperboletos"
+            :href="urlSuperboletos"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="boton-superboletos"
+             >
+              Buscar también en Superboletos
+             </a>
+
+             <p v-else-if="errorSuperboletos" class="texto-suave">
+             No fue posible consultar Superboletos en este momento.
+          </p>
         </footer>
       </article>
     </section>
@@ -114,6 +145,20 @@ watch(
 </template>
 
 <style scoped>
+.boton-superboletos {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--color-acento);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: center;
+}
+
+.boton-superboletos:hover {
+  opacity: 0.9;
+}
 .volver {
   align-self: flex-start;
 }
