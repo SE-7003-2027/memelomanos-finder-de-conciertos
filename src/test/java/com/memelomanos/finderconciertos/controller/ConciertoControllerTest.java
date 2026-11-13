@@ -1,8 +1,8 @@
 package com.memelomanos.finderconciertos.controller;
 
 import org.junit.jupiter.api.DisplayName;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.memelomanos.finderconciertos.integracion.superboletos.SuperboletosProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.security.ConfiguracionSeguridad;
 import com.memelomanos.finderconciertos.security.JwtService;
@@ -37,6 +37,9 @@ public class ConciertoControllerTest {
 
     @MockBean
     private JwtService jwtService;
+
+    @MockBean
+    private SuperboletosProveedor superboletosProveedor;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -104,4 +107,17 @@ public class ConciertoControllerTest {
             .andExpect(jsonPath("$.mensaje")
                     .value("El parámetro 'fechaDesde' debe ser una fecha válida con formato YYYY-MM-DD"));
     }
+
+    @Test
+    void buscarEnSuperboletos_DebeRetornarUrl() throws Exception {
+    when(conciertoService.buscarPorId(1L)).thenReturn(conciertoMock);
+
+    when(superboletosProveedor.generarUrlBusqueda("Coldplay"))
+            .thenReturn("https://www.superboletos.com/busqueda?query=Coldplay");
+
+    mockMvc.perform(get("/api/v1/conciertos/1/superboletos"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.urlBusqueda")
+                    .value("https://www.superboletos.com/busqueda?query=Coldplay"));
+}
 }

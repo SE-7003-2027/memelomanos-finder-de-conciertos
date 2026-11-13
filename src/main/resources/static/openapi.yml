@@ -156,6 +156,43 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
+  /conciertos/{id}/superboletos:
+    get:
+      summary: Generar URL de búsqueda en Superboletos
+      description: >
+        Genera una URL para buscar en Superboletos al artista
+        asociado al concierto. No consulta disponibilidad ni
+        recopila información de la plataforma externa.
+      tags:
+        - Conciertos
+      parameters:
+        - name: id
+          in: path
+          description: ID del concierto
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: URL de búsqueda generada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  urlBusqueda:
+                    type: string
+                    format: uri
+                    description: URL para buscar al artista en Superboletos
+                required:
+                  - urlBusqueda
+              example:
+                urlBusqueda: "https://www.superboletos.com/busqueda?query=Bad+Bunny"
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+
   # Usuarios
   /usuarios/registro:
     post:
