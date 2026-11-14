@@ -1,4 +1,4 @@
-package com.memelomanos.finderconciertos.config;
+package com.memelomanos.finderconciertos.datosdeprueba;
 
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
