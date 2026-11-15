@@ -4,6 +4,7 @@ import com.memelomanos.finderconciertos.integracion.ConciertoExterno;
 import com.memelomanos.finderconciertos.integracion.ticketmaster.TicketmasterProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -21,6 +22,7 @@ public class SincronizacionService {
         this.proveedor = proveedor;
     }
 
+    @Scheduled(cron = "${sincronizacion.ticketmaster.cron:-}", zone = "UTC")
     @Transactional
     public int sincronizar() {
         List<Concierto> eventos = proveedor.buscar(null, null, null, null).stream()
