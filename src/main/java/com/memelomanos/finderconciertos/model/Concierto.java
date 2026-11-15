@@ -1,9 +1,14 @@
 package com.memelomanos.finderconciertos.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 // Entidad que representa un concierto. Tiene los campos basicos que
@@ -12,6 +17,10 @@ import java.time.LocalDate;
 // por el. soundcloudUrl es opcional: es el perfil de SoundCloud del
 // artista y se usa cuando no hay credenciales de la API (ADR-005, #81).
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(
+        name = "uk_concierto_fuente_id_externo",
+        columnNames = {"fuente", "id_externo"}
+))
 public class Concierto {
 
     @Id
@@ -23,6 +32,17 @@ public class Concierto {
     private String ciudad;
     private String lugar;
     private String soundcloudUrl;
+
+    private String fuente;
+
+    @Column(name = "id_externo")
+    private String idExterno;
+
+    @Column(precision = 12, scale = 9)
+    private BigDecimal latitud;
+
+    @Column(precision = 12, scale = 9)
+    private BigDecimal longitud;
 
     // JPA necesita un constructor vacio para poder crear los objetos
     // cuando lee de la base de datos.
@@ -78,6 +98,38 @@ public class Concierto {
 
     public void setSoundcloudUrl(String soundcloudUrl) {
         this.soundcloudUrl = soundcloudUrl;
+    }
+
+    public String getFuente() {
+        return fuente;
+    }
+
+    public void setFuente(String fuente) {
+        this.fuente = fuente;
+    }
+
+    public String getIdExterno() {
+        return idExterno;
+    }
+
+    public void setIdExterno(String idExterno) {
+        this.idExterno = idExterno;
+    }
+
+    public BigDecimal getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(BigDecimal latitud) {
+        this.latitud = latitud;
+    }
+
+    public BigDecimal getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(BigDecimal longitud) {
+        this.longitud = longitud;
     }
 
     // Sin esto, dos objetos Concierto que representan la misma fila
