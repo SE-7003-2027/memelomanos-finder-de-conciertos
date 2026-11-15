@@ -30,37 +30,37 @@ final class TicketmasterCliente {
     }
 
     List<RespuestaTicketmaster.Evento> buscarEventos(
-        String artista, String ciudad, LocalDate fechaDesde, LocalDate fechaHasta
+            String artista, String ciudad, LocalDate fechaDesde, LocalDate fechaHasta
     ) {
-    List<RespuestaTicketmaster.Evento> eventos = new ArrayList<>();
+        List<RespuestaTicketmaster.Evento> eventos = new ArrayList<>();
 
-    try {
-        for (int pagina = 0; pagina * TAMANO_PAGINA < LIMITE_PAGINACION; pagina++) {
-            var respuesta = buscarPagina(artista, ciudad, fechaDesde, fechaHasta, pagina);
+        try {
+            for (int pagina = 0; pagina * TAMANO_PAGINA < LIMITE_PAGINACION; pagina++) {
+                var respuesta = buscarPagina(artista, ciudad, fechaDesde, fechaHasta, pagina);
 
-            if (respuesta == null || respuesta.contenido() == null
-                    || respuesta.contenido().events() == null
-                    || respuesta.contenido().events().isEmpty()) {
-                break;
+                if (respuesta == null || respuesta.contenido() == null
+                        || respuesta.contenido().events() == null
+                        || respuesta.contenido().events().isEmpty()) {
+                    break;
+                }
+
+                eventos.addAll(respuesta.contenido().events());
+
+                if (respuesta.pagina() == null || pagina + 1 >= respuesta.pagina().totalPages()) {
+                    break;
+                }
             }
-
-            eventos.addAll(respuesta.contenido().events());
-
-            if (respuesta.pagina() == null || pagina + 1 >= respuesta.pagina().totalPages()) {
-                break;
-            }
+        } catch (RestClientResponseException ex) {
+            LOG.warn("Ticketmaster rechazó la consulta con HTTP {}", ex.getStatusCode().value());
+            return List.of();
+        } catch (ResourceAccessException ex) {
+            LOG.warn("No se pudo completar la conexión con Ticketmaster");
+            return List.of();
         }
-    } catch (RestClientResponseException ex) {
-        LOG.warn("Ticketmaster rechazó la consulta con HTTP {}", ex.getStatusCode().value());
-        return List.of();
-    } catch (ResourceAccessException ex) {
-        LOG.warn("No se pudo completar la conexión con Ticketmaster");
-        return List.of();
-    }
 
         return eventos;
     }
-       
+
 
     RespuestaTicketmaster buscarPagina(
             String artista, String ciudad, LocalDate fechaDesde, LocalDate fechaHasta, int pagina
