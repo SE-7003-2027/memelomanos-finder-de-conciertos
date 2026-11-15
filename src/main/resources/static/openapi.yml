@@ -202,6 +202,32 @@ paths:
                 mensaje: No encontramos a Queen en SoundCloud
                 timestamp: "2026-11-07T12:00:00"
 
+  /admin/sincronizar:
+    post:
+      summary: Sincronizar conciertos de Ticketmaster
+      description: Ejecuta la sincronización manual. Disponible solo en el perfil dev.
+      operationId: sincronizarConciertos
+      tags:
+        - Administración
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sincronización completada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - procesados
+                properties:
+                  procesados:
+                    type: integer
+                    minimum: 0
+                    description: Cantidad de eventos guardados o actualizados.
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+
   # Usuarios
   /usuarios/registro:
     post:
