@@ -1,5 +1,7 @@
 package com.memelomanos.finderconciertos.service;
 
+import com.memelomanos.finderconciertos.integracion.ConciertoExterno;
+import com.memelomanos.finderconciertos.integracion.ticketmaster.TicketmasterProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import org.springframework.stereotype.Service;
@@ -12,9 +14,31 @@ import java.util.List;
 public class SincronizacionService {
 
     private final ConciertoRepository conciertos;
+    private final TicketmasterProveedor proveedor;
 
-    public SincronizacionService(ConciertoRepository conciertos) {
+    public SincronizacionService(ConciertoRepository conciertos, TicketmasterProveedor proveedor) {
         this.conciertos = conciertos;
+        this.proveedor = proveedor;
+    }
+
+    @Transactional
+    public int sincronizar() {
+        List<Concierto> eventos = proveedor.buscar(null, null, null, null).stream()
+                .map(this::convertirEvento)
+                .toList();
+
+        return guardar(eventos);
+    }
+
+    private Concierto convertirEvento(ConciertoExterno evento) {
+        Concierto concierto = new Concierto(
+                evento.artista(), evento.fecha(), evento.ciudad(), evento.lugar()
+        );
+        concierto.setFuente(evento.fuente());
+        concierto.setIdExterno(evento.idExterno());
+        concierto.setLatitud(evento.latitud());
+        concierto.setLongitud(evento.longitud());
+        return concierto;
     }
 
     @Transactional

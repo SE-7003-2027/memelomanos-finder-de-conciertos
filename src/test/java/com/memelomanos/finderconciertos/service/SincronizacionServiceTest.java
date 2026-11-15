@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.service;
 
+import com.memelomanos.finderconciertos.integracion.ticketmaster.TicketmasterProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
@@ -25,7 +26,8 @@ class SincronizacionServiceTest {
     @Test
     void actualizaElMismoConciertoYConservaElFavorito() {
         ConciertoRepository repositorio = mock(ConciertoRepository.class);
-        SincronizacionService servicio = new SincronizacionService(repositorio);
+        SincronizacionService servicio =
+                new SincronizacionService(repositorio, mock(TicketmasterProveedor.class));
 
         when(repositorio.findByFuenteAndIdExterno("TICKETMASTER", "abc123"))
                 .thenReturn(Optional.empty());
@@ -66,7 +68,8 @@ class SincronizacionServiceTest {
     @Test
     void ignoraEventosSinIdentificacionExterna() {
         ConciertoRepository repositorio = mock(ConciertoRepository.class);
-        SincronizacionService servicio = new SincronizacionService(repositorio);
+        SincronizacionService servicio =
+                new SincronizacionService(repositorio, mock(TicketmasterProveedor.class));
         Concierto sinId = eventoEn("Recinto");
         sinId.setIdExterno(" ");
         Concierto sinFuente = eventoEn("Recinto");
