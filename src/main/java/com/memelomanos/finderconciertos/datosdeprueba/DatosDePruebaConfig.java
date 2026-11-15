@@ -15,6 +15,7 @@ import java.time.LocalDate;
  * Cuando ya tengamos un endpoint para crear conciertos de verdad,
  * se puede borrar esta clase.
  */
+// TODO(#95): borrar estos datos cuando la sincronización real (#80) esté estable
 @Configuration
 @Profile("dev")
 public class DatosDePruebaConfig {
