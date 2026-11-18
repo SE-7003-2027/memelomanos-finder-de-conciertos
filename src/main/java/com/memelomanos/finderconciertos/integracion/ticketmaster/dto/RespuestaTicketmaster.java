@@ -26,17 +26,17 @@ public record RespuestaTicketmaster(
             List<Imagen> images,
             List<RangoPrecio> priceRanges
     ) {
-    public String urlImagenPrincipal() {
-        if (images == null) {
-            return null;
-        }
+        public String urlImagenPrincipal() {
+            if (images == null) {
+                return null;
+            }
 
-        return images.stream()
-                .filter(imagen -> "16_9".equals(imagen.ratio()))
-                .filter(imagen -> imagen.url() != null && !imagen.url().isBlank())
-                .max(Comparator.comparingLong(imagen -> (long) imagen.width() * imagen.height()))
-                .map(Imagen::url)
-                .orElse(null);
+            return images.stream()
+                    .filter(imagen -> "16_9".equals(imagen.ratio()))
+                    .filter(imagen -> imagen.url() != null && !imagen.url().isBlank())
+                    .max(Comparator.comparingLong(imagen -> (long) imagen.width() * imagen.height()))
+                    .map(Imagen::url)
+                    .orElse(null);
         }
     }
 
