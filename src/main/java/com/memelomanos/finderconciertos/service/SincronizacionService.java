@@ -6,7 +6,8 @@ import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -16,14 +17,19 @@ public class SincronizacionService {
 
     private final ConciertoRepository conciertos;
     private final TicketmasterProveedor proveedor;
+    private final TransactionTemplate transaccion;
 
-    public SincronizacionService(ConciertoRepository conciertos, TicketmasterProveedor proveedor) {
+    public SincronizacionService(
+            ConciertoRepository conciertos,
+            TicketmasterProveedor proveedor,
+            PlatformTransactionManager gestorTransacciones
+    ) {
         this.conciertos = conciertos;
         this.proveedor = proveedor;
+        this.transaccion = new TransactionTemplate(gestorTransacciones);
     }
 
     @Scheduled(cron = "${sincronizacion.ticketmaster.cron:-}", zone = "UTC")
-    @Transactional
     public int sincronizar() {
         List<Concierto> eventos = proveedor.buscar(null, null, null, null).stream()
                 .map(this::convertirEvento)
@@ -40,11 +46,19 @@ public class SincronizacionService {
         concierto.setIdExterno(evento.idExterno());
         concierto.setLatitud(evento.latitud());
         concierto.setLongitud(evento.longitud());
+        concierto.setUrlCompra(evento.urlCompra());
+        concierto.setImagenUrl(evento.imagenUrl());
+        concierto.setPrecioMinimo(evento.precioMinimo());
         return concierto;
     }
 
-    @Transactional
-    public int guardar(List<Concierto> eventos) {
+    public synchronized int guardar(List<Concierto> eventos) {
+        // Abre la transacción después de consultar la API, incluso en llamadas de esta clase.
+        // El bloqueo evita que dos sincronizaciones creen a la vez el mismo evento en esta instancia.
+        return transaccion.execute(estado -> guardarEnTransaccion(eventos));
+    }
+
+    private int guardarEnTransaccion(List<Concierto> eventos) {
         int guardados = 0;
 
         for (Concierto evento : eventos) {
@@ -63,6 +77,9 @@ public class SincronizacionService {
             concierto.setLugar(evento.getLugar());
             concierto.setLatitud(evento.getLatitud());
             concierto.setLongitud(evento.getLongitud());
+            concierto.setUrlCompra(evento.getUrlCompra());
+            concierto.setImagenUrl(evento.getImagenUrl());
+            concierto.setPrecioMinimo(evento.getPrecioMinimo());
 
             conciertos.save(concierto);
             guardados++;
