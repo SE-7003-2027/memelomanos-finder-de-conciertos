@@ -205,7 +205,11 @@ paths:
   /admin/sincronizar:
     post:
       summary: Sincronizar conciertos de Ticketmaster
-      description: Ejecuta la sincronización manual. Disponible solo en el perfil dev.
+      description: >
+        Ejecuta la sincronización manual. Disponible solo en el perfil dev.
+        Actualmente admite cualquier usuario con JWT válido, sin comprobar un rol
+        de administrador. Si falla una página de Ticketmaster, guarda los eventos
+        recibidos antes del fallo.
       operationId: sincronizarConciertos
       tags:
         - Administración
@@ -734,6 +738,36 @@ components:
           type: string
           nullable: true
           description: Perfil del artista en SoundCloud (opcional, ver ADR-005)
+        fuente:
+          type: string
+          nullable: true
+          description: Proveedor del evento importado
+        idExterno:
+          type: string
+          nullable: true
+          description: Identificador del evento en el proveedor
+        latitud:
+          type: number
+          nullable: true
+          description: Latitud del recinto
+        longitud:
+          type: number
+          nullable: true
+          description: Longitud del recinto
+        urlCompra:
+          type: string
+          format: uri
+          nullable: true
+          description: Enlace de compra recibido del proveedor
+        imagenUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Imagen principal recibida del proveedor
+        precioMinimo:
+          type: number
+          nullable: true
+          description: Precio mínimo recibido del proveedor
     
     ConciertoRequest:
       type: object
