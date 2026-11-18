@@ -44,7 +44,7 @@ class ArtistaControllerTest {
                 "https://i1.sndcdn.com/avatar.jpg",
                 "https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fbadbunny",
                 List.of(new PistaSoundCloud("Pista", "https://soundcloud.com/badbunny/pista", 180000)),
-                "oembed"));
+                "api"));
 
         mockMvc.perform(get("/api/v1/artistas/{nombre}/soundcloud", "Bad Bunny"))
                 .andExpect(status().isOk())
@@ -52,7 +52,7 @@ class ArtistaControllerTest {
                 .andExpect(jsonPath("$.avatarUrl").value("https://i1.sndcdn.com/avatar.jpg"))
                 .andExpect(jsonPath("$.pistas[0].titulo").value("Pista"))
                 .andExpect(jsonPath("$.pistas[0].duracionMs").value(180000))
-                .andExpect(jsonPath("$.fuente").value("oembed"));
+                .andExpect(jsonPath("$.fuente").value("api"));
     }
 
     @Test

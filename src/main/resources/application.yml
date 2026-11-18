@@ -16,10 +16,16 @@ jwt:
   secret: ${JWT_SECRET:clave_secreta_por_defecto_para_desarrollo_local_de_al_menos_256_bits_memelomanos_finder_conciertos}
   expiration-ms: 86400000 # 24 horas
 
-# Integracion con SoundCloud (ADR-005). Usa oEmbed con la soundcloudUrl
-# guardada en los conciertos; no necesita credenciales.
+# Integracion con SoundCloud (ADR-005). Sin client id ni secret solo se
+# usa el Plan B (oEmbed con la soundcloudUrl guardada en los conciertos).
+# Las credenciales nunca se escriben aqui: van en variables de entorno.
 soundcloud:
+  client-id: ${SOUNDCLOUD_CLIENT_ID:}
+  client-secret: ${SOUNDCLOUD_CLIENT_SECRET:}
+  api-url: https://api.soundcloud.com
+  auth-url: https://secure.soundcloud.com
   oembed-url: https://soundcloud.com/oembed
+  max-pistas: 5
   duracion-cache: 24h
   timeout: 5s
 
