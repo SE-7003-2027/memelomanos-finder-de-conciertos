@@ -170,7 +170,7 @@ nada en la raíz. El contrato completo de la API, con un cliente para
 probar cada endpoint, está en Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 
-### Ticketmaster (opcional)
+### Ticketmaster
 
 Registra la aplicación en el [portal de desarrolladores de Ticketmaster](https://developer.ticketmaster.com/products-and-docs/apis/getting-started/)
 para obtener la clave de Discovery API. Comparte la clave con el equipo por un canal privado
@@ -186,8 +186,10 @@ export TICKETMASTER_API_KEY
 ```
 
 El proveedor queda deshabilitado si falta la clave o si pones
-`TICKETMASTER_HABILITADO=false`. Las pruebas automatizadas usan respuestas simuladas.
-La sincronización de los conciertos con la base de datos corresponde al #80.
+`TICKETMASTER_HABILITADO=false`.
+Las fechas se interpretan en el horario de Ciudad de México antes de enviarse en UTC.
+El cliente separa las peticiones al menos 250 ms y conserva los eventos ya recibidos
+si una página posterior falla.
 
 ## 4. Levantar la interfaz
 
