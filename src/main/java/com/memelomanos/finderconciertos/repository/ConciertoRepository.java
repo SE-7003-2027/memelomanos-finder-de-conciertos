@@ -19,4 +19,6 @@ public interface ConciertoRepository extends
 
     // Perfil de SoundCloud guardado para un artista (Plan B de ADR-005).
     Optional<Concierto> findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull(String artista);
+
+    Optional<Concierto> findByFuenteAndIdExterno(String fuente, String idExterno);
 }

@@ -34,8 +34,22 @@ proveedores:
     habilitado: ${TICKETMASTER_HABILITADO:true}
     api-key: ${TICKETMASTER_API_KEY:}
 
+sincronizacion:
+  ticketmaster:
+    cron: "${TICKETMASTER_SINCRONIZACION_CRON:0 0 */6 * * *}"
+
 springdoc:
   swagger-ui:
     # Apunta al contrato escrito a mano (src/main/resources/static/openapi.yml),
     # que Spring sirve como archivo estatico en /openapi.yml.
     url: /openapi.yml
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+
+sincronizacion:
+  ticketmaster:
+    cron: "-"
