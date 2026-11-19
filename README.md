@@ -170,6 +170,27 @@ nada en la raíz. El contrato completo de la API, con un cliente para
 probar cada endpoint, está en Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 
+### Ticketmaster
+
+Registra la aplicación en el [portal de desarrolladores de Ticketmaster](https://developer.ticketmaster.com/products-and-docs/apis/getting-started/)
+para obtener la clave de Discovery API. Comparte la clave con el equipo por un canal privado
+y mantenla fuera del repositorio.
+
+En Bash, desde la raíz del proyecto, carga la clave en el entorno antes de iniciar el backend:
+
+```bash
+read -rsp 'Clave de Ticketmaster: ' TICKETMASTER_API_KEY
+printf '\n'
+export TICKETMASTER_API_KEY
+./mvnw spring-boot:run
+```
+
+El proveedor queda deshabilitado si falta la clave o si pones
+`TICKETMASTER_HABILITADO=false`.
+Las fechas se interpretan en el horario de Ciudad de México antes de enviarse en UTC.
+El cliente separa las peticiones al menos 250 ms y conserva los eventos ya recibidos
+si una página posterior falla.
+
 ## 4. Levantar la interfaz
 
 Con el backend corriendo, en **otra** terminal:

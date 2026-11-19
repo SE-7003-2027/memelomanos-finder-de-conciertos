@@ -1,0 +1,65 @@
+{
+  "_embedded": {
+    "events": [
+      {
+        "id": "evento-mx-prueba-001",
+        "name": "Café Tacvba",
+        "url": "https://example.com/boletos/cafe-tacvba",
+        "dates": {
+          "start": {
+            "localDate": "2027-03-20"
+          }
+        },
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Auditorio Nacional",
+              "city": {
+                "name": "Ciudad de México"
+              },
+              "location": {
+                "latitude": "19.4241",
+                "longitude": "-99.1949"
+              }
+            }
+          ]
+        },
+        "images": [
+          {
+            "ratio": "16_9",
+            "url": "https://example.com/concierto-chica.jpg",
+            "width": 640,
+            "height": 360
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://example.com/concierto-grande.jpg",
+            "width": 1280,
+            "height": 720
+          },
+          {
+            "ratio": "3_2",
+            "url": "https://example.com/concierto-3-2.jpg",
+            "width": 1800,
+            "height": 1200
+          }
+
+        ],
+        "priceRanges": [
+          {
+            "type": "standard",
+            "currency": "MXN",
+            "min": 850.0,
+            "max": 1500.0
+          }
+        ]
+      }
+    ]
+  },
+  "page": {
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1,
+    "number": 0
+  }
+}
