@@ -2,12 +2,19 @@
 import { pedir } from './cliente'
 
 /**
- * GET /conciertos. Los filtros vacios se ignoran, asi que sin filtros
+ * GET /conciertos. Los filtros vacíos se ignoran, así que sin filtros
  * regresa todos los conciertos.
- * @param {{ artista?: string, ciudad?: string }} [filtros]
+ * @param {{ artista?: string, ciudad?: string, fechaDesde?: string, fechaHasta?: string }} [filtros]
  */
-export function buscarConciertos({ artista, ciudad } = {}) {
-  return pedir('/conciertos', { params: { artista, ciudad } })
+export function buscarConciertos({
+    artista,
+    ciudad,
+    fechaDesde,
+    fechaHasta,
+  } = {}) {
+  return pedir('/conciertos', {
+    params: { artista, ciudad, fechaDesde, fechaHasta },
+  })
 }
 
 /** GET /conciertos/{id} */
