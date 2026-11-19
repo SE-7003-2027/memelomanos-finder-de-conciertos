@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import BotonFavorito from '@/components/BotonFavorito.vue'
+import ReproductorSoundCloud from '@/components/ReproductorSoundCloud.vue'
 import { formatearFecha } from '@/utils/fechas'
 import { obtenerConcierto, obtenerUrlSuperboletos } from '@/api/conciertos'
 
@@ -101,45 +102,50 @@ try {
         </p>
       </div>
 
-      <article v-else-if="concierto" class="tarjeta detalle">
-        <header class="cabecera">
-          <span class="ciudad">{{ concierto.ciudad }}</span>
-          <h1>{{ concierto.artista }}</h1>
-        </header>
+      <template v-else-if="concierto">
+        <article class="tarjeta detalle">
+          <header class="cabecera">
+            <span class="ciudad">{{ concierto.ciudad }}</span>
+            <h1>{{ concierto.artista }}</h1>
+          </header>
 
-        <dl class="datos">
-          <div>
-            <dt>Fecha</dt>
-            <dd>
-              <time :datetime="concierto.fecha">
-                {{ formatearFecha(concierto.fecha) }}
-              </time>
-            </dd>
-          </div>
+          <dl class="datos">
+            <div>
+              <dt>Fecha</dt>
+              <dd>
+                <time :datetime="concierto.fecha">
+                  {{ formatearFecha(concierto.fecha) }}
+                </time>
+              </dd>
+            </div>
 
-          <div>
-            <dt>Lugar</dt>
-            <dd>{{ concierto.lugar }}</dd>
-          </div>
-        </dl>
+            <div>
+              <dt>Lugar</dt>
+              <dd>{{ concierto.lugar }}</dd>
+            </div>
+          </dl>
 
-        <footer class="acciones">
-          <BotonFavorito :concierto="concierto" />
+          <footer class="acciones">
+            <BotonFavorito :concierto="concierto" />
             <a
-            v-if="urlSuperboletos"
-            :href="urlSuperboletos"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="boton-superboletos"
-             >
+              v-if="urlSuperboletos"
+              :href="urlSuperboletos"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="boton-superboletos"
+            >
               Buscar también en Superboletos
-             </a>
+            </a>
 
-             <p v-else-if="errorSuperboletos" class="texto-suave">
-             No fue posible consultar Superboletos en este momento.
-          </p>
-        </footer>
-      </article>
+            <p v-else-if="errorSuperboletos" class="texto-suave">
+              No fue posible consultar Superboletos en este momento.
+            </p>
+          </footer>
+        </article>
+
+        <!-- Va aparte del artículo: si SoundCloud falla, el detalle no cambia (#82). -->
+        <ReproductorSoundCloud :artista="concierto.artista" />
+      </template>
     </section>
   </div>
 </template>
@@ -158,6 +164,12 @@ try {
 
 .boton-superboletos:hover {
   opacity: 0.9;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 .volver {
   align-self: flex-start;

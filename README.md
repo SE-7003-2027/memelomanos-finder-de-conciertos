@@ -32,19 +32,22 @@ el mismo PR.
 | Lista de conciertos | Listo | Listo |
 | Detalle de un concierto | Listo | Listo |
 | Búsqueda de conciertos por artista y ciudad | Listo | Listo |
-| Búsqueda de conciertos por fecha | En curso (#53) | — |
+| Búsqueda de conciertos por fecha | Listo | Pendiente |
 | Alta, edición y baja de conciertos | Listo | — |
 | Registro, consulta, edición y baja de perfil | Listo | Listo |
 | Marcar y quitar conciertos favoritos | Listo | Listo |
-| Login con contraseña y token | En curso (#56, #57) | — |
-| Integración continua | Pendiente | — |
-| Configuración de CORS | Pendiente | — |
+| Login con contraseña y token JWT | Listo | Listo |
+| Escuchar al artista en SoundCloud | Listo (#81) | Listo (#82) |
+| Integración continua | Listo | — |
+| Configuración de CORS | Listo | — |
 
 ## Stack
 
 - **Backend:** Java 21 + Spring Boot 3.3 (API REST), Maven. Ver [ADR-001](docs/adr/001-eleccion-de-stack-backend.md).
 - **Interfaz:** aplicación web (SPA) con Vue 3 + Vite, en la carpeta [`frontend/`](frontend/). Ver [ADR-002](docs/adr/002-eleccion-de-interfaz-grafica.md).
 - **Base de datos:** PostgreSQL 16. Ver [ADR-003](docs/adr/003-eleccion-de-base-de-datos.md).
+- **Autenticación:** correo y contraseña con token JWT. Ver [ADR-004](docs/adr/004-estrategia-de-autenticacion.md).
+- **Música del artista:** SoundCloud (reproductor embebido). Ver [ADR-005](docs/adr/005-integracion-con-soundcloud.md).
 
 # Cómo ejecutar el proyecto desde cero
 
@@ -139,6 +142,12 @@ Con las opciones B o C, pon tus datos antes del comando:
 DB_URL=jdbc:postgresql://localhost:5432/finder_conciertos DB_USER=tu_usuario DB_PASSWORD=tu_password ./mvnw spring-boot:run
 ```
 
+Las variables que acepta el backend están documentadas, con valores de
+ejemplo, en [`.env.example`](.env.example). Las de SoundCloud
+(`SOUNDCLOUD_CLIENT_ID` y `SOUNDCLOUD_CLIENT_SECRET`) son opcionales: sin
+ellas, el reproductor del artista usa el endpoint público oEmbed (ver
+[ADR-005](docs/adr/005-integracion-con-soundcloud.md)).
+
 <details>
 <summary>Cómo pasar las variables desde IntelliJ</summary>
 
@@ -160,6 +169,27 @@ Abrir `http://localhost:8080/` responde `404`; es normal, porque no hay
 nada en la raíz. El contrato completo de la API, con un cliente para
 probar cada endpoint, está en Swagger UI:
 http://localhost:8080/swagger-ui/index.html
+
+### Ticketmaster
+
+Registra la aplicación en el [portal de desarrolladores de Ticketmaster](https://developer.ticketmaster.com/products-and-docs/apis/getting-started/)
+para obtener la clave de Discovery API. Comparte la clave con el equipo por un canal privado
+y mantenla fuera del repositorio.
+
+En Bash, desde la raíz del proyecto, carga la clave en el entorno antes de iniciar el backend:
+
+```bash
+read -rsp 'Clave de Ticketmaster: ' TICKETMASTER_API_KEY
+printf '\n'
+export TICKETMASTER_API_KEY
+./mvnw spring-boot:run
+```
+
+El proveedor queda deshabilitado si falta la clave o si pones
+`TICKETMASTER_HABILITADO=false`.
+Las fechas se interpretan en el horario de Ciudad de México antes de enviarse en UTC.
+El cliente separa las peticiones al menos 250 ms y conserva los eventos ya recibidos
+si una página posterior falla.
 
 ## 4. Levantar la interfaz
 
@@ -187,9 +217,7 @@ en la wiki.
 ```
 
 Al terminar, la consola muestra un resumen de puntaje por categoría de
-pruebas. Mientras no exista el login (#57),
-`SeguridadApiTest.accesoAnonimo_Bloqueado` falla a propósito, así que el
-comando termina con `BUILD FAILURE` aunque todo lo demás pase.
+pruebas. GitHub Actions corre el mismo comando en cada PR (job `Tests`).
 
 ### Pruebas manuales de la API
 
