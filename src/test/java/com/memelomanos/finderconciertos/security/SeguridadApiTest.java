@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.security;
 
+import com.memelomanos.finderconciertos.integracion.superboletos.SuperboletosProveedor;
 import com.memelomanos.finderconciertos.controller.UsuarioController;
 import com.memelomanos.finderconciertos.controller.ConciertoController;
 import com.memelomanos.finderconciertos.model.LoginResponse;
@@ -37,6 +38,9 @@ public class SeguridadApiTest {
 
     @MockBean
     private ConciertoService conciertoService;
+
+    @MockBean
+    private SuperboletosProveedor superboletosProveedor;
 
     @Test
     @DisplayName("Debe bloquear acceso anónimo a rutas privadas (401 Unauthorized)")

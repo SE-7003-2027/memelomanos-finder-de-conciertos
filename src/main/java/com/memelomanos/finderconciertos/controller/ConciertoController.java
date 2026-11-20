@@ -1,11 +1,13 @@
 package com.memelomanos.finderconciertos.controller;
 
+import com.memelomanos.finderconciertos.integracion.superboletos.SuperboletosProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.ConciertoRequest;
 import com.memelomanos.finderconciertos.service.ConciertoService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,9 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConciertoController {
 
     private final ConciertoService conciertoService;
+    private final SuperboletosProveedor superboletosProveedor;
 
-    public ConciertoController(ConciertoService conciertoService) {
+    public ConciertoController(
+        ConciertoService conciertoService,
+        SuperboletosProveedor superboletosProveedor) {
         this.conciertoService = conciertoService;
+        this.superboletosProveedor = superboletosProveedor;
     }
 
     @GetMapping("/conciertos")
@@ -67,4 +73,15 @@ public class ConciertoController {
     public void eliminar(@PathVariable Long id) {
         conciertoService.eliminar(id);
     }
+
+    @GetMapping("/conciertos/{id}/superboletos")
+    public Map<String, String> buscarEnSuperboletos(@PathVariable Long id) {
+    Concierto concierto = conciertoService.buscarPorId(id);
+
+    String url = superboletosProveedor.generarUrlBusqueda(
+            concierto.getArtista()
+    );
+
+    return Map.of("urlBusqueda", url);
+}
 }
