@@ -12,8 +12,6 @@ import java.time.LocalDate;
 /**
  * Esta clase solo sirve para tener datos de prueba mientras
  * desarrollamos, para no probar el endpoint con la base vacia.
- * Cuando ya tengamos un endpoint para crear conciertos de verdad,
- * se puede borrar esta clase.
  */
 // TODO(#95): borrar estos datos cuando la sincronización real (#80) esté estable
 @Configuration

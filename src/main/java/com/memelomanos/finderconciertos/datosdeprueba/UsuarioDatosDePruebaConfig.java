@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Profile;
  * Esta clase sirve para cargar usuarios de prueba al iniciar la aplicacion
  * para poder probar el endpoint GET /usuarios/perfil sin la base vacia.
  */
-// TODO(#95): borrar estos datos cuando la sincronización real (#80) esté estable
+// TODO(#95): borrar estos usuarios cuando el registro de usuarios esté estable
 @Configuration
 @Profile("dev")
 public class UsuarioDatosDePruebaConfig {
