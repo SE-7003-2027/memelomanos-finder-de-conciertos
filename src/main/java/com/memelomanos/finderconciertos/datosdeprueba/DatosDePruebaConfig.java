@@ -1,4 +1,4 @@
-package com.memelomanos.finderconciertos.config;
+package com.memelomanos.finderconciertos.datosdeprueba;
 
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
@@ -12,9 +12,8 @@ import java.time.LocalDate;
 /**
  * Esta clase solo sirve para tener datos de prueba mientras
  * desarrollamos, para no probar el endpoint con la base vacia.
- * Cuando ya tengamos un endpoint para crear conciertos de verdad,
- * se puede borrar esta clase.
  */
+// TODO(#95): borrar estos datos cuando la sincronización real (#80) esté estable
 @Configuration
 @Profile("dev")
 public class DatosDePruebaConfig {
