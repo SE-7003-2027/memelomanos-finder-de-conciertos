@@ -10,6 +10,8 @@ import jakarta.validation.constraints.Size;
 // del contrato; se revisan cuando el controller usa @Valid.
 public class RegistroRequest {
 
+    public static final int LONGITUD_MINIMA_PASSWORD = 8;
+
     @NotBlank
     private String nombre;
 
@@ -18,7 +20,8 @@ public class RegistroRequest {
     private String correo;
 
     @NotBlank
-    @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
+    @Size(min = LONGITUD_MINIMA_PASSWORD,
+          message = "La contraseña debe tener al menos " + LONGITUD_MINIMA_PASSWORD + " caracteres")
     private String password;
 
     public RegistroRequest() {

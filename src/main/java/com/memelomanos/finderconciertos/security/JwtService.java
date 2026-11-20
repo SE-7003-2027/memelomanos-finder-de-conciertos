@@ -14,12 +14,14 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
+    private static final String EXPIRACION_POR_DEFECTO_MS = "86400000";
+
     private final SecretKey secretKey;
     private final long expirationMs;
 
     public JwtService(
             @Value("${jwt.secret:clave_secreta_por_defecto_para_desarrollo_local_de_al_menos_256_bits_memelomanos_finder_conciertos}") String secret,
-            @Value("${jwt.expiration-ms:86400000}") long expirationMs) {
+            @Value("${jwt.expiration-ms:" + EXPIRACION_POR_DEFECTO_MS + "}") long expirationMs) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }

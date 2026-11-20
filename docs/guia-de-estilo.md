@@ -12,6 +12,11 @@ la guía: la wiki enlaza aquí.
 - Escribe funciones cortas; cada función debe hacer una sola cosa.
 - Comenta el "por qué", no el "qué": el código ya dice qué hace. Si algo
   no es obvio (una decisión rara, un workaround), coméntalo.
+- Nada de números mágicos: usa constantes con nombre en lugar de números
+  sueltos en la lógica (`LONGITUD_MINIMA_PASSWORD` en vez de `8`). Define
+  cada valor una sola vez por capa y reutilízalo, también en los mensajes.
+  Excepciones: los valores de estilo dentro del CSS, los códigos de estado
+  HTTP estándar (`401`, `404`, `409`) y el `0` o `1` en operaciones obvias.
 
 ## Java (backend)
 
