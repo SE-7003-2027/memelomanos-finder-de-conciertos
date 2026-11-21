@@ -1,5 +1,5 @@
 
-package com.memelomanos.finderconciertos.config;
+package com.memelomanos.finderconciertos.datosdeprueba;
 
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
  * Esta clase sirve para cargar usuarios de prueba al iniciar la aplicacion
  * para poder probar el endpoint GET /usuarios/perfil sin la base vacia.
  */
+// TODO(#95): borrar estos usuarios cuando el registro de usuarios esté estable
 @Configuration
 @Profile("dev")
 public class UsuarioDatosDePruebaConfig {

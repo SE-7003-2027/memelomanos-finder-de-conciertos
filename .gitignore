@@ -36,3 +36,23 @@ logs/
 
 ### Wiki ###
 memelomanos-finder-de-conciertos.wiki/
+
+### Frontend (Vue/Vite) ###
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/coverage/
+frontend/*.local
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+frontend/*.tsbuildinfo
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
