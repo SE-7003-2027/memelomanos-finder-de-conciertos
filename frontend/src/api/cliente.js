@@ -2,6 +2,7 @@
 // repetir fetch, encabezados ni manejo de errores en cada vista (issue #51).
 
 const PREFIJO_API = '/api/v1'
+export const STATUS_SIN_CONEXION = 0
 
 // Token JWT de la sesion actual. Siguiendo el ADR-004 se guarda solo en
 // memoria (no en localStorage), asi que se pierde al recargar la pagina.
@@ -66,7 +67,7 @@ export async function pedir(ruta, { metodo = 'GET', cuerpo, params, publico = fa
       body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
     })
   } catch {
-    throw new ErrorApi(0, 'No se pudo conectar con el servidor. Revisa que el backend este corriendo.')
+    throw new ErrorApi(STATUS_SIN_CONEXION, 'No se pudo conectar con el servidor. Revisa que el backend este corriendo.')
   }
 
   const datos = await leerJson(respuesta)
@@ -106,8 +107,15 @@ async function leerJson(respuesta) {
 }
 
 function mensajePorStatus(status) {
-  if (status === 401) return 'Tu sesion no es valida. Vuelve a entrar.'
-  if (status === 404) return 'No se encontro lo que buscabas.'
-  if (status >= 500) return 'El servidor tuvo un problema. Intenta de nuevo en un momento.'
-  return `La peticion fallo (error ${status}).`
+  switch (status) {
+    case 401:
+      return 'Tu sesion no es valida. Vuelve a entrar.'
+    case 404:
+      return 'No se encontro lo que buscabas.'
+    default:
+      if (status >= 500) {
+        return 'El servidor tuvo un problema. Intenta de nuevo en un momento.'
+      }
+      return `La peticion fallo (error ${status}).`
+  }
 }

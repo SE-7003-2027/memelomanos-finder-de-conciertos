@@ -16,6 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     public static final String PREFIJO_API = "/api/v1";
 
+    private static final long DURACION_CACHE_PREFLIGHT_SEGUNDOS = 3600;
+
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.addPathPrefix(PREFIJO_API,
@@ -36,6 +38,6 @@ public class WebConfig implements WebMvcConfigurer {
                 // Permite credenciales (cookies o headers de autenticacion)
                 .allowCredentials(true)
                 // Cache de preflight (OPTIONS) por 1 hora
-                .maxAge(3600);
+                .maxAge(DURACION_CACHE_PREFLIGHT_SEGUNDOS);
     }
 }
