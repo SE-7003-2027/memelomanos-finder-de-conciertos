@@ -1,8 +1,10 @@
 package com.memelomanos.finderconciertos.security;
 
 import com.memelomanos.finderconciertos.integracion.superboletos.SuperboletosProveedor;
+import com.memelomanos.finderconciertos.integracion.viagogo.ViagogoProveedor;
 import com.memelomanos.finderconciertos.controller.UsuarioController;
 import com.memelomanos.finderconciertos.controller.ConciertoController;
+import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.LoginResponse;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.service.UsuarioService;
@@ -42,6 +44,9 @@ public class SeguridadApiTest {
     @MockBean
     private SuperboletosProveedor superboletosProveedor;
 
+    @MockBean
+    private ViagogoProveedor viagogoProveedor;
+
     @Test
     @DisplayName("Debe bloquear acceso anónimo a rutas privadas (401 Unauthorized)")
     void accesoAnonimo_Bloqueado() throws Exception {
@@ -76,6 +81,19 @@ public class SeguridadApiTest {
     @DisplayName("La consulta de conciertos debe ser pública (GET /conciertos)")
     void conciertos_EsPublico() throws Exception {
         mockMvc.perform(get("/api/v1/conciertos"))
+               .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("La búsqueda en Viagogo debe ser pública (GET /conciertos/{id}/viagogo)")
+    void viagogo_EsPublico() throws Exception {
+        Concierto concierto = new Concierto();
+        concierto.setArtista("Coldplay");
+        when(conciertoService.buscarPorId(1L)).thenReturn(concierto);
+        when(viagogoProveedor.generarUrlBusqueda("Coldplay"))
+               .thenReturn("https://www.viagogo.com.mx/secure/Search?q=Coldplay");
+
+        mockMvc.perform(get("/api/v1/conciertos/1/viagogo"))
                .andExpect(status().isOk());
     }
 

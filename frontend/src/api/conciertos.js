@@ -26,3 +26,8 @@ export function obtenerConcierto(id) {
 export function obtenerUrlSuperboletos(id) {
   return pedir(`/conciertos/${encodeURIComponent(id)}/superboletos`)
 }
+
+/** GET /conciertos/{id}/viagogo */
+export function obtenerUrlViagogo(id) {
+  return pedir(`/conciertos/${encodeURIComponent(id)}/viagogo`)
+}
