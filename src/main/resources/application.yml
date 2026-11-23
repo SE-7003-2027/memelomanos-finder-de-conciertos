@@ -29,10 +29,22 @@ soundcloud:
   duracion-cache: 24h
   timeout: 5s
 
+# Configuracion de proveedores externos (ADR-006).
+# Ninguna API key ni secreto se escribe aqui: todo se lee de variables de entorno.
 proveedores:
   ticketmaster:
     habilitado: ${TICKETMASTER_HABILITADO:true}
     api-key: ${TICKETMASTER_API_KEY:}
+  superboletos:
+    habilitado: ${SUPERBOLETOS_HABILITADO:false}
+    api-key: ${SUPERBOLETOS_API_KEY:}
+  viagogo:
+    habilitado: ${VIAGOGO_HABILITADO:false}
+    api-key: ${VIAGOGO_API_KEY:}
+  soundcloud:
+    habilitado: ${SOUNDCLOUD_HABILITADO:true}
+    client-id: ${SOUNDCLOUD_CLIENT_ID:}
+    client-secret: ${SOUNDCLOUD_CLIENT_SECRET:}
 
 sincronizacion:
   ticketmaster:

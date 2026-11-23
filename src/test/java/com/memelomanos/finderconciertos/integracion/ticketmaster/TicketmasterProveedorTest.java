@@ -1,6 +1,8 @@
 package com.memelomanos.finderconciertos.integracion.ticketmaster;
 
 import com.memelomanos.finderconciertos.integracion.ConciertoExterno;
+import com.memelomanos.finderconciertos.integracion.CriteriosBusqueda;
+import com.memelomanos.finderconciertos.integracion.ProveedorConciertos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -21,6 +23,31 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class TicketmasterProveedorTest {
+
+    @Test
+    void implementaProveedorConciertosYExponeSuNombre() {
+        var builder = RestClient.builder();
+        var servidor = MockRestServiceServer.bindTo(builder).build();
+        ProveedorConciertos proveedor =
+                new TicketmasterProveedor(new TicketmasterCliente(builder, "clave-de-prueba"));
+        servidor.expect(queryParam("apikey", "clave-de-prueba"))
+                .andExpect(queryParam("keyword", "Caf%C3%A9%20Tacvba"))
+                .andExpect(queryParam("city", "Ciudad%20de%20M%C3%A9xico"))
+                .andRespond(withSuccess(new ClassPathResource("ticketmaster/eventos.json"),
+                        MediaType.APPLICATION_JSON));
+
+        var criterios = new CriteriosBusqueda("Café Tacvba", "Ciudad de México", null, null);
+        var resultado = proveedor.buscar(criterios);
+
+        assertThat(proveedor.nombre()).isEqualTo("TICKETMASTER");
+        assertThat(resultado).containsExactly(new ConciertoExterno(
+                "TICKETMASTER", "evento-mx-prueba-001", "Café Tacvba",
+                LocalDate.of(2027, 3, 20), "Ciudad de México", "Auditorio Nacional",
+                "https://example.com/boletos/cafe-tacvba", "https://example.com/concierto-grande.jpg",
+                new BigDecimal("19.4241"), new BigDecimal("-99.1949"), new BigDecimal("850.0")
+        ));
+        servidor.verify();
+    }
 
     @Test
     void convierteElEventoAlModeloDelProyecto() {
@@ -100,8 +127,8 @@ class TicketmasterProveedorTest {
                 )
                 .run(contexto -> {
                     assertThat(contexto).hasNotFailed();
-                    List<ConciertoExterno> resultado =
-                            contexto.getBean(TicketmasterProveedor.class).buscar(null, null, null, null);
+                    ProveedorConciertos proveedor = contexto.getBean(TicketmasterProveedor.class);
+                    List<ConciertoExterno> resultado = proveedor.buscar(null);
                     assertThat(resultado).isEmpty();
                 });
 
