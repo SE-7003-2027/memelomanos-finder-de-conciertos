@@ -3,6 +3,7 @@ package com.memelomanos.finderconciertos.controller;
 import org.junit.jupiter.api.DisplayName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memelomanos.finderconciertos.integracion.superboletos.SuperboletosProveedor;
+import com.memelomanos.finderconciertos.integracion.viagogo.ViagogoProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.security.ConfiguracionSeguridad;
 import com.memelomanos.finderconciertos.security.JwtService;
@@ -40,6 +41,9 @@ public class ConciertoControllerTest {
 
     @MockBean
     private SuperboletosProveedor superboletosProveedor;
+
+    @MockBean
+    private ViagogoProveedor viagogoProveedor;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -120,4 +124,17 @@ public class ConciertoControllerTest {
             .andExpect(jsonPath("$.urlBusqueda")
                     .value("https://www.superboletos.com/busqueda?query=Coldplay"));
 }
+
+    @Test
+    void buscarEnViagogo_DebeRetornarUrl() throws Exception {
+        when(conciertoService.buscarPorId(1L)).thenReturn(conciertoMock);
+
+        when(viagogoProveedor.generarUrlBusqueda("Coldplay"))
+                .thenReturn("https://www.viagogo.com.mx/secure/Search?q=Coldplay");
+
+        mockMvc.perform(get("/api/v1/conciertos/1/viagogo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.urlBusqueda")
+                        .value("https://www.viagogo.com.mx/secure/Search?q=Coldplay"));
+    }
 }

@@ -4,7 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import BotonFavorito from '@/components/BotonFavorito.vue'
 import ReproductorSoundCloud from '@/components/ReproductorSoundCloud.vue'
 import { formatearFecha } from '@/utils/fechas'
-import { obtenerConcierto, obtenerUrlSuperboletos } from '@/api/conciertos'
+import { obtenerConcierto, obtenerUrlSuperboletos, obtenerUrlViagogo } from '@/api/conciertos'
 
 const route = useRoute()
 
@@ -14,6 +14,8 @@ const noEncontrado = ref(false)
 const error = ref('')
 const urlSuperboletos = ref('')
 const errorSuperboletos = ref('')
+const urlViagogo = ref('')
+const errorViagogo = ref('')
 
 watch(
   () => route.params.id,
@@ -31,6 +33,8 @@ watch(
     concierto.value = null
     urlSuperboletos.value = ''
     errorSuperboletos.value = ''
+    urlViagogo.value = ''
+    errorViagogo.value = ''
 
 
 try {
@@ -50,6 +54,18 @@ try {
   } catch (e) {
     if (vigente) {
       errorSuperboletos.value = e.message
+    }
+  }
+
+  try {
+    const resultado = await obtenerUrlViagogo(id)
+
+    if (vigente) {
+      urlViagogo.value = resultado.urlBusqueda
+    }
+  } catch (e) {
+    if (vigente) {
+      errorViagogo.value = e.message
     }
   }
 } catch (e) {
@@ -140,6 +156,20 @@ try {
             <p v-else-if="errorSuperboletos" class="texto-suave">
               No fue posible consultar Superboletos en este momento.
             </p>
+
+            <a
+              v-if="urlViagogo"
+              :href="urlViagogo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="boton-viagogo"
+            >
+              Buscar en Viagogo
+            </a>
+
+            <p v-else-if="errorViagogo" class="texto-suave">
+              No fue posible consultar Viagogo en este momento.
+            </p>
           </footer>
         </article>
 
@@ -151,7 +181,8 @@ try {
 </template>
 
 <style scoped>
-.boton-superboletos {
+.boton-superboletos,
+.boton-viagogo {
   display: inline-block;
   padding: 10px 16px;
   border-radius: 8px;
@@ -162,7 +193,8 @@ try {
   text-align: center;
 }
 
-.boton-superboletos:hover {
+.boton-superboletos:hover,
+.boton-viagogo:hover {
   opacity: 0.9;
 }
 

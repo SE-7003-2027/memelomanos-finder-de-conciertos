@@ -1,6 +1,7 @@
 package com.memelomanos.finderconciertos.controller;
 
 import com.memelomanos.finderconciertos.integracion.superboletos.SuperboletosProveedor;
+import com.memelomanos.finderconciertos.integracion.viagogo.ViagogoProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.ConciertoRequest;
 import com.memelomanos.finderconciertos.service.ConciertoService;
@@ -25,12 +26,15 @@ public class ConciertoController {
 
     private final ConciertoService conciertoService;
     private final SuperboletosProveedor superboletosProveedor;
+    private final ViagogoProveedor viagogoProveedor;
 
     public ConciertoController(
         ConciertoService conciertoService,
-        SuperboletosProveedor superboletosProveedor) {
+        SuperboletosProveedor superboletosProveedor,
+        ViagogoProveedor viagogoProveedor) {
         this.conciertoService = conciertoService;
         this.superboletosProveedor = superboletosProveedor;
+        this.viagogoProveedor = viagogoProveedor;
     }
 
     @GetMapping("/conciertos")
@@ -84,4 +88,15 @@ public class ConciertoController {
 
     return Map.of("urlBusqueda", url);
 }
+
+    @GetMapping("/conciertos/{id}/viagogo")
+    public Map<String, String> buscarEnViagogo(@PathVariable Long id) {
+        Concierto concierto = conciertoService.buscarPorId(id);
+
+        String url = viagogoProveedor.generarUrlBusqueda(
+                concierto.getArtista()
+        );
+
+        return Map.of("urlBusqueda", url);
+    }
 }
