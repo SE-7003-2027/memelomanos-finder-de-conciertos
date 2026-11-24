@@ -72,6 +72,28 @@ Como requester (quien abre el PR):
 - Actualiza documentos como el README si es necesario
 - En la descripción, cierra los issues con `Closes #123`
 
+## Cobertura de pruebas
+
+El backend usa **JaCoCo** para medir la cobertura de pruebas automáticamente
+al ejecutar Maven:
+
+```bash
+./mvnw test
+```
+
+Al terminar las pruebas, JaCoCo genera el reporte HTML en
+`target/site/jacoco/index.html`. Para inspeccionarlo en local, abre ese
+archivo en tu navegador (por ejemplo `xdg-open target/site/jacoco/index.html`
+en Linux o `open target/site/jacoco/index.html` en macOS).
+
+- Se excluyen del cálculo `FinderDeConciertosApplication`, las clases de
+  `datosdeprueba/` y el código generado por OpenAPI en
+  `com.memelomanos.conciertos`.
+- Maven verifica un umbral mínimo de **78 % de cobertura de líneas**; si la
+  cobertura cae por debajo, `./mvnw test` y el CI fallan.
+- En cada PR, el job `Tests` sube el reporte HTML como artifact
+  (`jacoco-report`), descargable desde la pestaña **Checks** del PR.
+
 ## Merge
 
 - Se mergea con **Squash and merge**, para que cada PR quede como un solo
