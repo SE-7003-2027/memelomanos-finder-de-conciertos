@@ -1,7 +1,5 @@
 package com.memelomanos.finderconciertos.service;
 
-import com.memelomanos.finderconciertos.integracion.ConciertoExterno;
-import com.memelomanos.finderconciertos.integracion.ticketmaster.TicketmasterProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,77 +11,58 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class SincronizacionService {
 
     private final ConciertoRepository conciertos;
-    private final TicketmasterProveedor proveedor;
+    private final AgregadorConciertosService agregador;
     private final TransactionTemplate transaccion;
 
     public SincronizacionService(
             ConciertoRepository conciertos,
-            TicketmasterProveedor proveedor,
+            AgregadorConciertosService agregador,
             PlatformTransactionManager gestorTransacciones
     ) {
         this.conciertos = conciertos;
-        this.proveedor = proveedor;
+        this.agregador = agregador;
         this.transaccion = new TransactionTemplate(gestorTransacciones);
     }
 
     @Scheduled(cron = "${sincronizacion.ticketmaster.cron:-}", zone = "UTC")
     public synchronized int sincronizar() {
-        var catalogo = proveedor.descargarCatalogo();
-        if (catalogo.eventos().isEmpty()) {
+        var catalogo = agregador.descargarCatalogos();
+        if (catalogo.conciertos().isEmpty()) {
             // Un catálogo vacío no confirma el retiro de los eventos guardados.
             return 0;
         }
 
-        List<Concierto> eventos = catalogo.eventos().stream()
-                .map(evento -> convertirEvento(evento, catalogo.cancelados()))
-                .toList();
-
         return transaccion.execute(estado -> {
-            int guardados = guardarEnTransaccion(eventos);
-            if (catalogo.completo()) {
-                marcarAusentes(eventos);
-            }
+            int guardados = guardarEnTransaccion(catalogo.conciertos());
+            catalogo.idsPorFuenteCompleta().forEach(this::marcarAusentes);
             return guardados;
         });
     }
 
-    private void marcarAusentes(List<Concierto> eventos) {
-        var recibidos = eventos.stream().map(Concierto::getIdExterno).collect(Collectors.toSet());
+    public synchronized int guardar(List<Concierto> eventos) {
+        // Abre la transacción después de consultar las APIs externas, incluso en llamadas de esta clase.
+        // El bloqueo evita que dos sincronizaciones creen a la vez el mismo evento en esta instancia.
+        return transaccion.execute(estado -> guardarEnTransaccion(eventos));
+    }
+
+    private void marcarAusentes(String fuente, Set<String> recibidos) {
+        if (!StringUtils.hasText(fuente) || recibidos == null || recibidos.isEmpty()) {
+            return;
+        }
         LocalDate hoy = LocalDate.now(ZoneId.of("America/Mexico_City"));
         for (Concierto concierto : conciertos.findByFuenteAndDisponibleTrueAndFechaGreaterThanEqual(
-                TicketmasterProveedor.FUENTE, hoy)) {
+                fuente, hoy)) {
             if (!recibidos.contains(concierto.getIdExterno())) {
                 concierto.setDisponible(false);
             }
         }
-    }
-
-    private Concierto convertirEvento(ConciertoExterno evento, Set<String> cancelados) {
-        Concierto concierto = new Concierto(
-                evento.artista(), evento.fecha(), evento.ciudad(), evento.lugar()
-        );
-        concierto.setFuente(evento.fuente());
-        concierto.setIdExterno(evento.idExterno());
-        concierto.setDisponible(evento.idExterno() == null || !cancelados.contains(evento.idExterno()));
-        concierto.setLatitud(evento.latitud());
-        concierto.setLongitud(evento.longitud());
-        concierto.setUrlCompra(evento.urlCompra());
-        concierto.setImagenUrl(evento.imagenUrl());
-        concierto.setPrecioMinimo(evento.precioMinimo());
-        return concierto;
-    }
-
-    public synchronized int guardar(List<Concierto> eventos) {
-        // Abre la transacción después de consultar la API, incluso en llamadas de esta clase.
-        // El bloqueo evita que dos sincronizaciones creen a la vez el mismo evento en esta instancia.
-        return transaccion.execute(estado -> guardarEnTransaccion(eventos));
     }
 
     private int guardarEnTransaccion(List<Concierto> eventos) {
@@ -94,8 +73,7 @@ public class SincronizacionService {
                 continue;
             }
 
-            Concierto concierto = conciertos.findByFuenteAndIdExterno(evento.getFuente(), evento.getIdExterno())
-                    .orElseGet(Concierto::new);
+            Concierto concierto = buscarExistente(evento).orElseGet(Concierto::new);
 
             concierto.setFuente(evento.getFuente());
             concierto.setIdExterno(evento.getIdExterno());
@@ -109,11 +87,27 @@ public class SincronizacionService {
             concierto.setImagenUrl(evento.getImagenUrl());
             concierto.setPrecioMinimo(evento.getPrecioMinimo());
             concierto.setDisponible(evento.isDisponible());
+            if (!evento.getOpcionesCompra().isEmpty()) {
+                concierto.reemplazarOpcionesCompra(evento.getOpcionesCompra());
+            }
 
             conciertos.save(concierto);
             guardados++;
         }
 
         return guardados;
+    }
+
+    private Optional<Concierto> buscarExistente(Concierto evento) {
+        Optional<Concierto> porIdExterno = conciertos.findByFuenteAndIdExterno(
+                evento.getFuente(), evento.getIdExterno()
+        );
+        if (porIdExterno.isPresent() || evento.getFecha() == null) {
+            return porIdExterno;
+        }
+
+        return conciertos.findByFecha(evento.getFecha()).stream()
+                .filter(existente -> AgregadorConciertosService.mismoConcierto(existente, evento))
+                .findFirst();
     }
 }

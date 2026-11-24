@@ -17,26 +17,41 @@ public class ProveedorFalso implements ProveedorConciertos {
     private final String nombre;
     private final List<ConciertoExterno> conciertos;
     private final boolean habilitado;
+    private final boolean reventa;
 
     public ProveedorFalso(List<ConciertoExterno> conciertos) {
-        this(NOMBRE_POR_DEFECTO, conciertos, true);
+        this(NOMBRE_POR_DEFECTO, conciertos, true, false);
     }
 
     public ProveedorFalso(String nombre, List<ConciertoExterno> conciertos) {
-        this(nombre, conciertos, true);
+        this(nombre, conciertos, true, false);
     }
 
     public ProveedorFalso(String nombre, List<ConciertoExterno> conciertos, boolean habilitado) {
+        this(nombre, conciertos, habilitado, false);
+    }
+
+    public ProveedorFalso(
+            String nombre,
+            List<ConciertoExterno> conciertos,
+            boolean habilitado,
+            boolean reventa
+    ) {
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre del proveedor no puede estar vacío");
         }
         this.nombre = nombre.strip();
         this.conciertos = conciertos == null ? List.of() : List.copyOf(conciertos);
         this.habilitado = habilitado;
+        this.reventa = reventa;
     }
 
     public static ProveedorFalso deshabilitado(String nombre) {
-        return new ProveedorFalso(nombre, List.of(), false);
+        return new ProveedorFalso(nombre, List.of(), false, false);
+    }
+
+    public static ProveedorFalso deReventa(String nombre, List<ConciertoExterno> conciertos) {
+        return new ProveedorFalso(nombre, conciertos, true, true);
     }
 
     @Override
@@ -58,6 +73,16 @@ public class ProveedorFalso implements ProveedorConciertos {
     @Override
     public String nombre() {
         return nombre;
+    }
+
+    @Override
+    public boolean estaHabilitado() {
+        return habilitado;
+    }
+
+    @Override
+    public boolean esReventa() {
+        return reventa;
     }
 
     private static boolean coincideTexto(String valor, String filtro) {

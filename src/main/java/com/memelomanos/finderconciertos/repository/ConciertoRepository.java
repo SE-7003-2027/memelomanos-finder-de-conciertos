@@ -24,4 +24,6 @@ public interface ConciertoRepository extends
     Optional<Concierto> findByFuenteAndIdExterno(String fuente, String idExterno);
 
     List<Concierto> findByFuenteAndDisponibleTrueAndFechaGreaterThanEqual(String fuente, LocalDate fecha);
+
+    List<Concierto> findByFecha(LocalDate fecha);
 }

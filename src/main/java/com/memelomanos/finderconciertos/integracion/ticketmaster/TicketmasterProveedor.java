@@ -60,6 +60,17 @@ public class TicketmasterProveedor implements ProveedorConciertos {
         return FUENTE;
     }
 
+    @Override
+    public boolean estaHabilitado() {
+        return cliente != null;
+    }
+
+    @Override
+    public CatalogoProveedor descargarCatalogoCompleto() {
+        Catalogo catalogo = descargarCatalogo();
+        return new CatalogoProveedor(catalogo.eventos(), catalogo.cancelados(), catalogo.completo());
+    }
+
     public List<ConciertoExterno> buscar(
             String artista, String ciudad, LocalDate fechaDesde, LocalDate fechaHasta
     ) {

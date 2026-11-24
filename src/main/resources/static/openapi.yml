@@ -99,6 +99,9 @@ paths:
 
     get:
       summary: Consultar un concierto por ID
+      description: >
+        Devuelve el detalle del concierto junto con todas las opciones de compra
+        agrupadas de los distintos proveedores habilitados (`opcionesCompra`).
       tags:
         - Conciertos
       responses:
@@ -276,12 +279,13 @@ paths:
 
   /admin/sincronizar:
     post:
-      summary: Sincronizar conciertos de Ticketmaster
+      summary: Sincronizar conciertos desde los proveedores habilitados
       description: >
-        Ejecuta la sincronización manual. Disponible solo en el perfil dev.
-        Actualmente admite cualquier usuario con JWT válido, sin comprobar un rol
-        de administrador. Si falla una página de Ticketmaster, guarda los eventos
-        recibidos antes del fallo.
+        Ejecuta la sincronización manual a través del agregador de proveedores.
+        Disponible solo en el perfil dev. Actualmente admite cualquier usuario
+        con JWT válido, sin comprobar un rol de administrador. Si un proveedor
+        falla o excede su timeout, se omite y se guardan los eventos deduplicados
+        del resto de proveedores junto con sus opciones de compra.
       operationId: sincronizarConciertos
       tags:
         - Administración
@@ -844,7 +848,36 @@ components:
           type: number
           nullable: true
           description: Precio mínimo recibido del proveedor
-    
+        opcionesCompra:
+          type: array
+          description: Opciones de compra disponibles en los distintos proveedores para este concierto
+          items:
+            $ref: '#/components/schemas/OpcionCompra'
+
+    OpcionCompra:
+      type: object
+      description: Opción de compra de boletos en un proveedor externo
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID autogenerado de la opción de compra
+        fuente:
+          type: string
+          description: Proveedor que ofrece los boletos (ej. TICKETMASTER, VIAGOGO)
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: Enlace directo para comprar boletos en el proveedor
+        precioMinimo:
+          type: number
+          nullable: true
+          description: Precio mínimo reportado por el proveedor
+        esReventa:
+          type: boolean
+          description: Indica si el proveedor corresponde a un mercado de reventa
+
     ConciertoRequest:
       type: object
       description: Datos necesarios para crear o actualizar un concierto

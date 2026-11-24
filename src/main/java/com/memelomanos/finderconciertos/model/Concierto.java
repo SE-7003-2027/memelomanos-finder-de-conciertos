@@ -1,23 +1,28 @@
 package com.memelomanos.finderconciertos.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Concierto guardado en la base de datos con artista, fecha, ciudad y lugar.
  * soundcloudUrl es el perfil opcional del artista para la integración con SoundCloud
  * cuando faltan credenciales de su API (ADR-005).
  * Los eventos importados se identifican por fuente e id externo para actualizar
- * sus datos y conservar sus favoritos.
+ * sus datos y conservar sus favoritos, y pueden agrupar múltiples opciones de compra.
  */
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(
@@ -61,6 +66,14 @@ public class Concierto {
 
     @Column(precision = 12, scale = 2)
     private BigDecimal precioMinimo;
+
+    @OneToMany(
+            mappedBy = "concierto",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
+    )
+    private List<OpcionCompra> opcionesCompra = new ArrayList<>();
 
     // JPA necesita un constructor vacio para poder crear los objetos
     // cuando lee de la base de datos.
@@ -180,6 +193,38 @@ public class Concierto {
 
     public void setPrecioMinimo(BigDecimal precioMinimo) {
         this.precioMinimo = precioMinimo;
+    }
+
+    public List<OpcionCompra> getOpcionesCompra() {
+        return opcionesCompra;
+    }
+
+    public void agregarOpcionCompra(OpcionCompra opcionCompra) {
+        if (opcionCompra == null) {
+            return;
+        }
+        opcionCompra.setConcierto(this);
+        opcionesCompra.add(opcionCompra);
+    }
+
+    public void reemplazarOpcionesCompra(List<OpcionCompra> nuevasOpciones) {
+        for (OpcionCompra existente : opcionesCompra) {
+            existente.setConcierto(null);
+        }
+        opcionesCompra.clear();
+        if (nuevasOpciones == null) {
+            return;
+        }
+        for (OpcionCompra opcion : nuevasOpciones) {
+            if (opcion != null) {
+                agregarOpcionCompra(new OpcionCompra(
+                        opcion.getFuente(),
+                        opcion.getUrl(),
+                        opcion.getPrecioMinimo(),
+                        opcion.isEsReventa()
+                ));
+            }
+        }
     }
 
     // Sin esto, dos objetos Concierto que representan la misma fila

@@ -46,6 +46,9 @@ proveedores:
     client-id: ${SOUNDCLOUD_CLIENT_ID:}
     client-secret: ${SOUNDCLOUD_CLIENT_SECRET:}
 
+agregador:
+  timeout: ${AGREGADOR_TIMEOUT:10s}
+
 sincronizacion:
   ticketmaster:
     cron: "${TICKETMASTER_SINCRONIZACION_CRON:0 0 */6 * * *}"
