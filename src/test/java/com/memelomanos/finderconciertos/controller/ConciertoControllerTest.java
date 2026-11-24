@@ -77,6 +77,7 @@ public class ConciertoControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void eliminar_DebeRetornarNoContent() throws Exception {
         doNothing().when(conciertoService).eliminar(1L);
 

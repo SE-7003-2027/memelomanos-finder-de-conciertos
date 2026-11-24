@@ -1,5 +1,7 @@
 package com.memelomanos.finderconciertos.security;
 
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,18 +11,24 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Configuration
 @EnableWebSecurity
 public class ConfiguracionSeguridad {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private static final String ROL_ADMIN = "ADMIN";
 
-    public ConfiguracionSeguridad(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final HandlerExceptionResolver handlerExceptionResolver;
+
+    public ConfiguracionSeguridad(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.handlerExceptionResolver = handlerExceptionResolver;
     }
 
     @Bean
@@ -30,14 +38,24 @@ public class ConfiguracionSeguridad {
     }
 
     @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        // Delega el 403 al ManejadorGlobalDeExcepciones para responder con el formato ErrorRespuesta.
+        return (request, response, accessDeniedException) ->
+                handlerExceptionResolver.resolveException(request, response, null, accessDeniedException);
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // Deshabilitar CSRF dado que usamos JWT stateless
                 .csrf(csrf -> csrf.disable())
                 // Conectar la configuracion de CORS definida en WebConfig
                 .cors(Customizer.withDefaults())
-                // Configurar 401 Unauthorized cuando no este autenticado
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint()))
+                // Configurar 401 sin sesion y 403 con ErrorRespuesta cuando falta el rol
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint())
+                        .accessDeniedHandler(accessDeniedHandler())
+                )
                 // Sesiones Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Reglas de autorizacion por endpoint
@@ -56,7 +74,12 @@ public class ConfiguracionSeguridad {
                                 "/swagger-ui.html",
                                 "/openapi.yml"
                         ).permitAll()
-                        // 5. Todo lo demas requiere token JWT valido
+                        // 5. Alta, edicion y baja de conciertos y rutas de administracion solo para ADMIN
+                        .requestMatchers(HttpMethod.POST, "/api/v1/conciertos", "/conciertos").hasRole(ROL_ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/conciertos/**", "/conciertos/**").hasRole(ROL_ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/conciertos/**", "/conciertos/**").hasRole(ROL_ADMIN)
+                        .requestMatchers("/api/v1/admin/**", "/admin/**").hasRole(ROL_ADMIN)
+                        // 6. Todo lo demas requiere token JWT valido
                         .anyRequest().authenticated()
                 )
                 // Agregar el filtro JWT antes del filtro estandar de Spring Security

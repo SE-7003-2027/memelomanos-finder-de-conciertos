@@ -3,6 +3,8 @@ package com.memelomanos.finderconciertos.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,6 +32,10 @@ public class Usuario {
     @JsonIgnore
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'USUARIO'")
+    private RolUsuario rol = RolUsuario.USUARIO;
+
     @ManyToMany
     private List<Concierto> favoritos = new ArrayList<>();
 
@@ -42,9 +48,14 @@ public class Usuario {
     }
 
     public Usuario(String nombre, String correo, String password) {
+        this(nombre, correo, password, RolUsuario.USUARIO);
+    }
+
+    public Usuario(String nombre, String correo, String password, RolUsuario rol) {
         this.nombre = nombre;
         this.correo = correo;
         this.password = password;
+        this.rol = rol == null ? RolUsuario.USUARIO : rol;
     }
 
     public Long getId() {
@@ -73,6 +84,14 @@ public class Usuario {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public RolUsuario getRol() {
+        return rol == null ? RolUsuario.USUARIO : rol;
+    }
+
+    public void setRol(RolUsuario rol) {
+        this.rol = rol == null ? RolUsuario.USUARIO : rol;
     }
 
     public List<Concierto> getFavoritos() {

@@ -1,14 +1,16 @@
 package com.memelomanos.finderconciertos.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import jakarta.validation.ConstraintViolationException;
+
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +31,11 @@ public class ManejadorGlobalDeExcepciones {
     @ExceptionHandler(CorreoDuplicadoException.class)
     public ResponseEntity<ErrorRespuesta> manejarCorreoDuplicado(CorreoDuplicadoException ex) {
         return construir(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorRespuesta> manejarAccesoDenegado(AccessDeniedException ex) {
+        return construir(HttpStatus.FORBIDDEN, "No tienes permisos para realizar esta acción");
     }
 
     // Se dispara cuando un body con @Valid no cumple las reglas

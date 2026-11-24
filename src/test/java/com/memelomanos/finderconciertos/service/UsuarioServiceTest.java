@@ -4,9 +4,9 @@ import org.junit.jupiter.api.DisplayName;
 import com.memelomanos.finderconciertos.exception.ConciertoNoEncontradoException;
 import com.memelomanos.finderconciertos.exception.CorreoDuplicadoException;
 import com.memelomanos.finderconciertos.exception.CredencialesInvalidasException;
-import com.memelomanos.finderconciertos.exception.UsuarioNoEncontradoException;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.LoginResponse;
+import com.memelomanos.finderconciertos.model.RolUsuario;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @DisplayName("Servicio de Usuarios (Lógica de Negocio)")
@@ -45,11 +46,11 @@ public class UsuarioServiceTest {
     private UsuarioService usuarioService;
 
     @Test
-    @DisplayName("Debe registrar un usuario correctamente con password encriptado")
+    @DisplayName("Debe registrar un usuario correctamente con password encriptado y rol USUARIO")
     void registrarUsuario_Exito() {
         when(usuarioRepository.existsByCorreo(anyString())).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashedPassword");
-        
+
         Usuario usuarioMock = new Usuario("Juan", "juan@test.com", "hashedPassword");
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioMock);
 
@@ -57,6 +58,7 @@ public class UsuarioServiceTest {
 
         assertNotNull(resultado);
         assertEquals("Juan", resultado.getNombre());
+        assertEquals(RolUsuario.USUARIO, resultado.getRol());
         verify(passwordEncoder, times(1)).encode("password123");
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
     }
@@ -74,12 +76,13 @@ public class UsuarioServiceTest {
     }
 
     @Test
-    @DisplayName("Login exitoso debe retornar token JWT")
+    @DisplayName("Login exitoso debe retornar token JWT con el rol del usuario")
     void login_Exito() {
-        Usuario usuarioMock = new Usuario("Juan", "juan@test.com", "hashedPassword");
+        Usuario usuarioMock = new Usuario("Juan", "juan@test.com", "hashedPassword", RolUsuario.ADMIN);
         when(usuarioRepository.findByCorreo("juan@test.com")).thenReturn(Optional.of(usuarioMock));
         when(passwordEncoder.matches("password123", "hashedPassword")).thenReturn(true);
-        when(jwtService.generarToken(eq("juan@test.com"), any())).thenReturn("fake-jwt-token");
+        when(jwtService.generarToken(eq("juan@test.com"), any(), eq(RolUsuario.ADMIN)))
+                .thenReturn("fake-jwt-token");
 
         LoginResponse response = usuarioService.login("juan@test.com", "password123");
 

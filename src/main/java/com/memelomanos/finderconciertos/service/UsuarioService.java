@@ -6,6 +6,7 @@ import com.memelomanos.finderconciertos.exception.CredencialesInvalidasException
 import com.memelomanos.finderconciertos.exception.UsuarioNoEncontradoException;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.LoginResponse;
+import com.memelomanos.finderconciertos.model.RolUsuario;
 import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
@@ -45,6 +46,7 @@ public class UsuarioService {
         Usuario userNuevo = new Usuario();
         userNuevo.setNombre(nombre);
         userNuevo.setCorreo(correo);
+        userNuevo.setRol(RolUsuario.USUARIO);
         if (rawPassword != null) {
             userNuevo.setPassword(passwordEncoder.encode(rawPassword));
         }
@@ -59,7 +61,7 @@ public class UsuarioService {
             throw new CredencialesInvalidasException("Credenciales invalidas");
         }
 
-        String token = jwtService.generarToken(usuario.getCorreo(), usuario.getId());
+        String token = jwtService.generarToken(usuario.getCorreo(), usuario.getId(), usuario.getRol());
         return new LoginResponse(token);
     }
 
