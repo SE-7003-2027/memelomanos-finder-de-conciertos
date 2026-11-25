@@ -15,6 +15,7 @@ import java.net.SocketTimeoutException;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -59,8 +60,10 @@ class TicketmasterClienteTest {
         servidor.expect(requestTo(urlPagina(1)))
             .andRespond(withSuccess(respuestaPagina("evento-2", 1), MediaType.APPLICATION_JSON));
 
-        var eventos = cliente.buscarEventos(null, null, null, null);
+        var descarga = cliente.descargar(null, null, null, null);
+        var eventos = descarga.eventos();
 
+        assertTrue(descarga.completa());
         assertEquals(2, eventos.size());
         assertEquals("evento-1", eventos.getFirst().id());
         assertEquals("evento-2", eventos.getLast().id());
@@ -107,8 +110,10 @@ class TicketmasterClienteTest {
         servidor.expect(requestTo(urlPagina(1)))
                 .andRespond(withStatus(HttpStatus.valueOf(estado)));
 
-        var eventos = cliente.buscarEventos(null, null, null, null);
+        var descarga = cliente.descargar(null, null, null, null);
+        var eventos = descarga.eventos();
 
+        assertFalse(descarga.completa());
         assertEquals(1, eventos.size());
         assertEquals("evento-1", eventos.getFirst().id());
         servidor.verify();
@@ -167,7 +172,7 @@ class TicketmasterClienteTest {
         return """
             {
               "_embedded": { "events": [{ "id": "%s" }] },
-              "page": { "number": %d, "totalPages": 2 }
+              "page": { "number": %d, "totalPages": 2, "totalElements": 2 }
             }
             """.formatted(id, pagina);
     }

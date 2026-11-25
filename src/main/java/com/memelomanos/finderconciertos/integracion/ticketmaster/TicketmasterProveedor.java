@@ -15,11 +15,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class TicketmasterProveedor {
 
-    private static final String FUENTE = "TICKETMASTER";
+    public static final String FUENTE = "TICKETMASTER";
     private static final Duration TIEMPO_CONEXION = Duration.ofSeconds(3);
     private static final Duration TIEMPO_LECTURA = Duration.ofSeconds(5);
 
@@ -51,6 +53,24 @@ public class TicketmasterProveedor {
                 .filter(Objects::nonNull)
                 .map(this::convertir)
                 .toList();
+    }
+
+    public record Catalogo(List<ConciertoExterno> eventos, Set<String> cancelados, boolean completo) {}
+
+    public Catalogo descargarCatalogo() {
+        if (cliente == null) {
+            return new Catalogo(List.of(), Set.of(), false);
+        }
+
+        var descarga = cliente.descargar(null, null, null, null);
+        var eventos = descarga.eventos().stream().filter(Objects::nonNull).toList();
+        var cancelados = eventos.stream()
+                .filter(evento -> evento.dates() != null && evento.dates().status() != null)
+                .filter(evento -> "canceled".equalsIgnoreCase(evento.dates().status().code()))
+                .map(Evento::id)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        return new Catalogo(eventos.stream().map(this::convertir).toList(), cancelados, descarga.completa());
     }
 
     private static TicketmasterCliente crearCliente(RestClient.Builder builder, String apiKey) {
