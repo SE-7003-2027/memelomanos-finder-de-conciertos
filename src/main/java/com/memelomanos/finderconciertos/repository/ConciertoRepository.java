@@ -1,6 +1,7 @@
 package com.memelomanos.finderconciertos.repository;
 
 import com.memelomanos.finderconciertos.model.Concierto;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,4 +22,6 @@ public interface ConciertoRepository extends
     Optional<Concierto> findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull(String artista);
 
     Optional<Concierto> findByFuenteAndIdExterno(String fuente, String idExterno);
+
+    List<Concierto> findByFuenteAndDisponibleTrueAndFechaGreaterThanEqual(String fuente, LocalDate fecha);
 }

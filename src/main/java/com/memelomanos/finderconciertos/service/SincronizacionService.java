@@ -10,7 +10,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class SincronizacionService {
@@ -30,20 +34,39 @@ public class SincronizacionService {
     }
 
     @Scheduled(cron = "${sincronizacion.ticketmaster.cron:-}", zone = "UTC")
-    public int sincronizar() {
-        List<Concierto> eventos = proveedor.buscar(null, null, null, null).stream()
-                .map(this::convertirEvento)
+    public synchronized int sincronizar() {
+        var catalogo = proveedor.descargarCatalogo();
+        List<Concierto> eventos = catalogo.eventos().stream()
+                .map(evento -> convertirEvento(evento, catalogo.cancelados()))
                 .toList();
 
-        return guardar(eventos);
+        return transaccion.execute(estado -> {
+            int guardados = guardarEnTransaccion(eventos);
+            if (catalogo.completo()) {
+                marcarAusentes(eventos);
+            }
+            return guardados;
+        });
     }
 
-    private Concierto convertirEvento(ConciertoExterno evento) {
+    private void marcarAusentes(List<Concierto> eventos) {
+        var recibidos = eventos.stream().map(Concierto::getIdExterno).collect(Collectors.toSet());
+        LocalDate hoy = LocalDate.now(ZoneId.of("America/Mexico_City"));
+        for (Concierto concierto : conciertos.findByFuenteAndDisponibleTrueAndFechaGreaterThanEqual(
+                TicketmasterProveedor.FUENTE, hoy)) {
+            if (!recibidos.contains(concierto.getIdExterno())) {
+                concierto.setDisponible(false);
+            }
+        }
+    }
+
+    private Concierto convertirEvento(ConciertoExterno evento, Set<String> cancelados) {
         Concierto concierto = new Concierto(
                 evento.artista(), evento.fecha(), evento.ciudad(), evento.lugar()
         );
         concierto.setFuente(evento.fuente());
         concierto.setIdExterno(evento.idExterno());
+        concierto.setDisponible(evento.idExterno() == null || !cancelados.contains(evento.idExterno()));
         concierto.setLatitud(evento.latitud());
         concierto.setLongitud(evento.longitud());
         concierto.setUrlCompra(evento.urlCompra());
@@ -80,6 +103,7 @@ public class SincronizacionService {
             concierto.setUrlCompra(evento.getUrlCompra());
             concierto.setImagenUrl(evento.getImagenUrl());
             concierto.setPrecioMinimo(evento.getPrecioMinimo());
+            concierto.setDisponible(evento.isDisponible());
 
             conciertos.save(concierto);
             guardados++;
