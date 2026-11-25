@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 import BotonFavorito from '@/components/BotonFavorito.vue'
 import { formatearFecha } from '@/utils/fechas'
+import imagenPredeterminada from '@/assets/concierto-default.png'
 
 defineProps({
   concierto: {
@@ -9,6 +10,13 @@ defineProps({
     required: true,
   },
 })
+
+function usarImagenPredeterminada(event) {
+  const imagen = event.target
+  imagen.onerror = null
+  imagen.src = imagenPredeterminada
+}
+
 </script>
 
 <template>
@@ -17,6 +25,12 @@ defineProps({
       :to="{ name: 'concierto-detalle', params: { id: concierto.id } }"
       class="enlace-detalle"
     >
+    <img
+    class="imagen-concierto"
+    :src="concierto.imagenUrl || imagenPredeterminada"
+    :alt="`Imagen de ${concierto.artista}`"
+    @error="usarImagenPredeterminada"
+    />
       <header class="cabecera">
         <span class="ciudad">{{ concierto.ciudad }}</span>
         <h2>{{ concierto.artista }}</h2>
@@ -48,6 +62,13 @@ defineProps({
 </template>
 
 <style scoped>
+.imagen-concierto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+}
 .concierto {
   display: flex;
   flex-direction: column;
