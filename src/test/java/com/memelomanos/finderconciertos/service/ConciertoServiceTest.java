@@ -2,18 +2,24 @@ package com.memelomanos.finderconciertos.service;
 
 import org.junit.jupiter.api.DisplayName;
 
+import com.memelomanos.finderconciertos.RelojDePrueba;
 import com.memelomanos.finderconciertos.exception.ConciertoNoEncontradoException;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.model.ConciertoRequest;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -32,28 +38,43 @@ public class ConciertoServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
-    @InjectMocks
+    private final LocalDate hoy = LocalDate.of(2026, 11, 25);
     private ConciertoService conciertoService;
 
+    @BeforeEach
+    void configurarServicio() {
+        var reloj = new RelojDePrueba(Instant.parse("2026-11-25T12:00:00Z"));
+        conciertoService = new ConciertoService(conciertoRepository, usuarioRepository, reloj);
+    }
+
     @Test
-void buscar_SinFiltros_RetornaTodos() {
-    Concierto c1 = new Concierto();
-    c1.setArtista("Artista 1");
+    void buscar_sinFechaInicialFiltraDesdeHoy() {
+        comprobarFechaInicial(null, hoy);
+    }
 
-    when(conciertoRepository.findAll(
-            any(org.springframework.data.jpa.domain.Specification.class),
-            any(Sort.class)))
-            .thenReturn(List.of(c1));
+    @Test
+    void buscar_respetaUnaFechaInicialAnteriorAHoy() {
+        LocalDate ayer = hoy.minusDays(1);
+        comprobarFechaInicial(ayer, ayer);
+    }
 
-    List<Concierto> resultado =
-            conciertoService.buscar(null, null, null, null);
+    private void comprobarFechaInicial(LocalDate solicitada, LocalDate esperada) {
+        @SuppressWarnings("unchecked")
+        Root<Concierto> concierto = mock(Root.class);
+        @SuppressWarnings("unchecked")
+        Path<LocalDate> fecha = mock(Path.class);
+        CriteriaBuilder constructor = mock(CriteriaBuilder.class);
+        when(concierto.<LocalDate>get("fecha")).thenReturn(fecha);
+        when(conciertoRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenAnswer(consulta -> {
+                    Specification<Concierto> filtro = consulta.getArgument(0);
+                    filtro.toPredicate(concierto, null, constructor);
+                    return List.of();
+                });
 
-    assertFalse(resultado.isEmpty());
-    assertEquals(1, resultado.size());
+        conciertoService.buscar(null, null, solicitada, null);
 
-    verify(conciertoRepository, times(1)).findAll(
-            any(org.springframework.data.jpa.domain.Specification.class),
-            any(Sort.class));
+        verify(constructor).greaterThanOrEqualTo(fecha, esperada);
     }
 
     @Test
