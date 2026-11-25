@@ -1,4 +1,4 @@
-# ADR-006: Integración con proveedores externos y sincronización
+# ADR-007: Sincronización y disponibilidad de conciertos
 
 ## Status
 
@@ -30,28 +30,18 @@ tiene una restricción única en la base. Si el evento ya existe, se actualiza
 el mismo registro y conserva su ID interno, de modo que los favoritos siguen
 apuntando al concierto correcto.
 
-### Contrato para proveedores de conciertos
+### Reglas comunes y fallas de sincronización
 
-La propuesta del [#77](https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos/issues/77) define
-`ProveedorConciertos` para los adaptadores que suministran eventos. Cada uno
-identifica su fuente con `nombre()` y devuelve una lista de `ConciertoExterno`
-desde `buscar(CriteriosBusqueda criterios)`. Los enlaces de búsqueda de
-Superboletos y Viagogo y el reproductor de SoundCloud quedan fuera de este
-contrato mientras no suministren eventos para el catálogo.
+El [ADR-006 de arquitectura base](https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos/pull/114)
+define el contrato `ProveedorConciertos`, las credenciales en variables de
+entorno y cómo se aíslan los errores de cada proveedor. Los enlaces de búsqueda
+de Superboletos y Viagogo y el reproductor de SoundCloud quedan fuera de la
+sincronización del catálogo.
 
-### Fallas y credenciales
-
-Cada adaptador respeta la cuota de su proveedor y aplica tiempos de espera.
-Ticketmaster deja al menos 250 ms entre peticiones. Si falla una página, se
-registra una advertencia y se conservan los eventos ya recibidos. Si falla
-antes de recibir resultados, se devuelve una lista vacía. El fallo de un
-proveedor no debe provocar un HTTP 500 en la aplicación ni impedir que se
-procesen resultados de otras fuentes.
-
-Las credenciales se leen de variables de entorno, como
-`TICKETMASTER_API_KEY`. No se guardan en el repositorio ni se escriben en los
-logs. Ticketmaster queda deshabilitado si no hay clave o si la configuración
-lo apaga.
+En Ticketmaster, el cliente deja al menos 250 ms entre peticiones. Si falla
+una página, registra una advertencia y conserva los eventos ya recibidos. Si
+falla antes de recibir resultados, devuelve una lista vacía. En ambos casos,
+la búsqueda sigue usando los datos guardados en PostgreSQL.
 
 ### Deduplicación entre fuentes
 

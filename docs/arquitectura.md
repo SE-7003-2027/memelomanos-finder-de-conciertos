@@ -24,7 +24,7 @@ flowchart LR
   el acceso a datos. Es la fuente de verdad.
 - **Ticketmaster** alimenta el catálogo mediante sincronización programada.
   La interfaz consulta los conciertos guardados a través del backend. Ver
-  [ADR-006](adr/006-integracion-con-proveedores.md).
+  [ADR-007](adr/007-integracion-con-proveedores.md).
 - **SoundCloud** se usa para el reproductor (ADR-005). Solo el backend
   le pide datos, porque las credenciales no pueden llegar al navegador; la
   interfaz únicamente carga el reproductor embebido de SoundCloud en un
@@ -48,7 +48,7 @@ responsabilidades:
 | Model | `model` | Entidades (`Concierto`, `Usuario`) y cuerpos de petición (`RegistroRequest`, `FavoritoRequest`, `ConciertoRequest`) |
 | Exception | `exception` | Excepciones del dominio y manejador global de errores |
 | Config | `config` | Prefijo `/api/v1` y datos de prueba |
-| Integración | `integracion` | Adaptadores de servicios externos, como SoundCloud y Ticketmaster ([ADR-006](adr/006-integracion-con-proveedores.md)) |
+| Integración | `integracion` | Adaptadores de servicios externos, como SoundCloud y Ticketmaster ([ADR-007](adr/007-integracion-con-proveedores.md)) |
 
 ```
 com.memelomanos.finderconciertos
