@@ -63,8 +63,11 @@ public class ConciertoServiceTest {
         Root<Concierto> concierto = mock(Root.class);
         @SuppressWarnings("unchecked")
         Path<LocalDate> fecha = mock(Path.class);
+        @SuppressWarnings("unchecked")
+        Path<Boolean> disponible = mock(Path.class);
         CriteriaBuilder constructor = mock(CriteriaBuilder.class);
         when(concierto.<LocalDate>get("fecha")).thenReturn(fecha);
+        when(concierto.<Boolean>get("disponible")).thenReturn(disponible);
         when(conciertoRepository.findAll(any(Specification.class), any(Sort.class)))
                 .thenAnswer(consulta -> {
                     Specification<Concierto> filtro = consulta.getArgument(0);
@@ -75,6 +78,7 @@ public class ConciertoServiceTest {
         conciertoService.buscar(null, null, solicitada, null);
 
         verify(constructor).greaterThanOrEqualTo(fecha, esperada);
+        verify(constructor).isTrue(disponible);
     }
 
     @Test

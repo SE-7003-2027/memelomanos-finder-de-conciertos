@@ -54,7 +54,9 @@ public class ConciertoService {
         LocalDate fechaHasta) {
 
     LocalDate inicio = fechaDesde != null ? fechaDesde : LocalDate.now(reloj);
-    Specification<Concierto> filtros = ConciertoSpecifications.desdeFecha(inicio);
+    Specification<Concierto> filtros = ConciertoSpecifications.desdeFecha(inicio)
+            .and((concierto, consulta, constructor) ->
+                    constructor.isTrue(concierto.get("disponible")));
 
     if (artista != null && !artista.isBlank()) {
         filtros = filtros.and(

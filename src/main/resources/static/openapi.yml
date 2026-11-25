@@ -789,6 +789,10 @@ components:
     Concierto:
       type: object
       properties:
+        disponible:
+          type: boolean
+          readOnly: true
+          description: Indica si el concierto está disponible, independientemente de su fecha.
         id:
           type: integer
           format: int64
