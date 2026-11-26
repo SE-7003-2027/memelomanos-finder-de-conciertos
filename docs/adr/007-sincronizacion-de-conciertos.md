@@ -60,17 +60,20 @@ distinguirlas.
 ### Cancelaciones y eventos ausentes
 
 Para el [#103](https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos/issues/103), se propone
-marcar como no disponible un evento con cancelación explícita o que desaparece
-de una sincronización completa de su fuente. Se conserva el registro y se
-excluye de la búsqueda. Si ya era favorito, sigue visible en el perfil con su
-estado.
+marcar como no disponible un evento con cancelación explícita o un concierto
+vigente que desaparece de una sincronización completa y no vacía de su fuente.
+Se conserva el registro y se excluye de la búsqueda. Si ya era favorito,
+sigue visible en el perfil con su estado.
 
-Una respuesta parcial, con error, limitada en páginas o que cubre solo un
-subconjunto del catálogo sirve para actualizar los conciertos recibidos. La
-ausencia de un evento en esa respuesta no demuestra que fue retirado. Antes
-de aplicar la regla por ausencia, la sincronización debe poder distinguir
-una descarga completa de una parcial. La lista que devuelve actualmente
-Ticketmaster no comunica por sí sola esa diferencia.
+El [PR #122](https://github.com/SE-7003-2027/memelomanos-finder-de-conciertos/pull/122)
+considera completa la descarga de Ticketmaster si llega a la última página,
+la numeración y los totales de paginación son coherentes, y se reciben tantos
+eventos como indica `totalElements`, todos con un ID válido y sin repeticiones.
+
+Si falla una página o se alcanza el límite de 1,000 eventos antes de completar
+la descarga, se actualizan los eventos recibidos y se conserva el estado de
+los ausentes. Un catálogo vacío tampoco cambia la disponibilidad de los
+conciertos guardados, aunque la API indique que terminó de responder.
 
 ## Consecuencias
 
@@ -84,7 +87,7 @@ Ticketmaster no comunica por sí sola esa diferencia.
 
 - La búsqueda refleja la última sincronización; los cambios pueden tardar en verse.
 - Hay que almacenar el catálogo y ejecutar la sincronización periódica.
-- Para detectar bajas por ausencia hace falta confirmar que la descarga fue completa.
+- Para detectar bajas por ausencia se necesita una descarga completa y no vacía.
 
 ## Alternativas consideradas
 
