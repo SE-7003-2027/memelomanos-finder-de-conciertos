@@ -36,6 +36,11 @@ public class SincronizacionService {
     @Scheduled(cron = "${sincronizacion.ticketmaster.cron:-}", zone = "UTC")
     public synchronized int sincronizar() {
         var catalogo = proveedor.descargarCatalogo();
+        if (catalogo.eventos().isEmpty()) {
+            // Un catálogo vacío no confirma el retiro de los eventos guardados.
+            return 0;
+        }
+
         List<Concierto> eventos = catalogo.eventos().stream()
                 .map(evento -> convertirEvento(evento, catalogo.cancelados()))
                 .toList();

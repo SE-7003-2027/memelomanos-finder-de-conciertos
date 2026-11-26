@@ -8,6 +8,7 @@ import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -144,8 +145,8 @@ class SincronizacionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void unaAusenciaSoloAfectaLaDisponibilidadSiElCatalogoEstaCompleto(boolean completo) {
+    @CsvSource({"true, false", "false, false", "true, true"})
+    void soloMarcaAusentesConUnCatalogoCompletoYNoVacio(boolean completo, boolean vacio) {
         ConciertoRepository repositorio = mock(ConciertoRepository.class);
         TicketmasterProveedor proveedor = mock(TicketmasterProveedor.class);
         SincronizacionService servicio =
@@ -155,15 +156,21 @@ class SincronizacionServiceTest {
         Usuario usuario = new Usuario("Ricardo", "ricardo@example.com");
         usuario.agregarFavorito(ausente);
 
+        var recibido = new ConciertoExterno("TICKETMASTER", "otro-id", "Otro artista",
+                ausente.getFecha(), "CDMX", "Recinto", null, null, null, null, null);
+        var eventos = vacio ? List.<ConciertoExterno>of() : List.of(recibido);
         when(proveedor.descargarCatalogo()).thenReturn(
-                new TicketmasterProveedor.Catalogo(List.of(), Set.of(), completo));
+                new TicketmasterProveedor.Catalogo(eventos, Set.of(), completo));
         when(repositorio.findByFuenteAndDisponibleTrueAndFechaGreaterThanEqual(
                 eq(TicketmasterProveedor.FUENTE), any(LocalDate.class)))
                 .thenReturn(List.of(ausente));
 
-        assertThat(servicio.sincronizar()).isZero();
+        assertThat(servicio.sincronizar()).isEqualTo(eventos.size());
 
-        assertThat(ausente.isDisponible()).isEqualTo(!completo);
+        assertThat(ausente.isDisponible()).isEqualTo(!completo || vacio);
+        if (vacio) {
+            verifyNoInteractions(repositorio);
+        }
         assertThat(usuario.getFavoritos()).containsExactly(ausente);
         verify(repositorio, never()).delete(any(Concierto.class));
     }
