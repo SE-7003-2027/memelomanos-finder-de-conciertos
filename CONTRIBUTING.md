@@ -56,6 +56,24 @@ Ejemplos: `feat(frontend): cliente HTTP y vistas de perfil`,
 
 Un commit, una tarea: no mezcles cambios sin relación en un mismo commit.
 
+## Cambios a la base de datos
+
+El esquema lo crean las migraciones de Flyway
+([ADR-008](docs/adr/008-migraciones-de-base-de-datos.md)), no Hibernate.
+
+- **Todo cambio al modelo trae su migración en el mismo PR.** Si agregas,
+  quitas o cambias un campo o una entidad, agrega un archivo nuevo en
+  `src/main/resources/db/migration` con el número siguiente al último que
+  haya en `main`: `V2__agregar_disponible_a_concierto.sql`.
+- No edites una migración que ya está en `main`. Si te equivocaste, corrige
+  con una migración nueva.
+- Si al rebasar ves que `main` ya tiene una migración con tu número,
+  renombra la tuya al siguiente número libre.
+- Una columna nueva `NOT NULL` necesita un `DEFAULT`, para que las filas
+  que ya existen la puedan llenar.
+- El CI (`Tests`) aplica todas las migraciones en PostgreSQL y falla si las
+  entidades no coinciden con la base.
+
 ## Antes de abrir un PR
 
 Como requester (quien abre el PR):
