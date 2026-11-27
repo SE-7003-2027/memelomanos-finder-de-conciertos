@@ -2,6 +2,7 @@ package com.memelomanos.finderconciertos.integracion.soundcloud;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud.Origen;
 import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud.PistaSoundCloud;
 import java.time.Clock;
 import java.time.Duration;
@@ -59,7 +60,7 @@ public class SoundCloudCliente {
 
     /**
      * Busca al artista y regresa su perfil con sus pistas mas escuchadas,
-     * o vacio si SoundCloud no tiene a nadie con ese nombre.
+     * o vacio si ningun resultado tiene exactamente ese nombre.
      *
      * @throws RestClientException si SoundCloud no responde o rechaza la peticion
      */
@@ -77,23 +78,22 @@ public class SoundCloudCliente {
                 perfil.avatarUrl(),
                 ArtistaSoundCloud.widgetPara(perfil.permalinkUrl()),
                 pistasMasEscuchadas(perfil.urn()),
-                "api"));
+                "api",
+                Origen.API));
     }
 
-    // Preferimos al usuario cuyo nombre coincide exacto; si no hay, el
-    // primer resultado, que es el que SoundCloud considera mas relevante.
+    // Solo aceptamos perfiles cuyo nombre coincide con el del artista: el
+    // primer resultado de la busqueda puede ser un tributo o un fan. Si
+    // varios coinciden (homonimos), gana el de mas seguidores.
     private Optional<Perfil> elegirPerfil(Perfiles perfiles, String nombre) {
         if (perfiles == null || perfiles.collection() == null) {
             return Optional.empty();
         }
-        List<Perfil> candidatos = perfiles.collection().stream()
+        return perfiles.collection().stream()
                 .filter(perfil -> perfil.urn() != null && perfil.permalinkUrl() != null)
-                .toList();
-        return candidatos.stream()
-                .filter(perfil -> nombre.equalsIgnoreCase(perfil.username())
-                        || nombre.equalsIgnoreCase(perfil.fullName()))
-                .findFirst()
-                .or(() -> candidatos.stream().findFirst());
+                .filter(perfil -> NombresSoundCloud.coinciden(nombre, perfil.username())
+                        || NombresSoundCloud.coinciden(nombre, perfil.fullName()))
+                .max(Comparator.comparingLong(Perfil::seguidores));
     }
 
     // La API no ordena las pistas por popularidad, asi que pedimos las
@@ -189,10 +189,15 @@ public class SoundCloudCliente {
             String username,
             @JsonProperty("full_name") String fullName,
             @JsonProperty("permalink_url") String permalinkUrl,
-            @JsonProperty("avatar_url") String avatarUrl) {
+            @JsonProperty("avatar_url") String avatarUrl,
+            @JsonProperty("followers_count") Long followersCount) {
 
         String nombreVisible() {
             return fullName != null && !fullName.isBlank() ? fullName : username;
+        }
+
+        long seguidores() {
+            return followersCount == null ? 0 : followersCount;
         }
     }
 

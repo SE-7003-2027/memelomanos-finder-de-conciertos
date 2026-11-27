@@ -17,7 +17,7 @@ public interface ConciertoRepository extends
     List<Concierto> findByArtistaContainingIgnoreCaseAndCiudadContainingIgnoreCase(
             String artista, String ciudad);
 
-    // Perfil de SoundCloud guardado para un artista (Plan B de ADR-005).
+    // Perfil de SoundCloud capturado a mano para un artista (ADR-005).
     Optional<Concierto> findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull(String artista);
 
     Optional<Concierto> findByFuenteAndIdExterno(String fuente, String idExterno);

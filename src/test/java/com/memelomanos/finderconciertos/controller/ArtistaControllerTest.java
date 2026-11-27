@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.memelomanos.finderconciertos.exception.ArtistaSinSoundCloudException;
 import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud;
+import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud.Origen;
 import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud.PistaSoundCloud;
 import com.memelomanos.finderconciertos.security.ConfiguracionSeguridad;
 import com.memelomanos.finderconciertos.security.JwtService;
@@ -44,7 +45,8 @@ class ArtistaControllerTest {
                 "https://i1.sndcdn.com/avatar.jpg",
                 "https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fbadbunny",
                 List.of(new PistaSoundCloud("Pista", "https://soundcloud.com/badbunny/pista", 180000)),
-                "api"));
+                "api",
+                Origen.AUTOMATICO));
 
         mockMvc.perform(get("/api/v1/artistas/{nombre}/soundcloud", "Bad Bunny"))
                 .andExpect(status().isOk())
@@ -52,7 +54,8 @@ class ArtistaControllerTest {
                 .andExpect(jsonPath("$.avatarUrl").value("https://i1.sndcdn.com/avatar.jpg"))
                 .andExpect(jsonPath("$.pistas[0].titulo").value("Pista"))
                 .andExpect(jsonPath("$.pistas[0].duracionMs").value(180000))
-                .andExpect(jsonPath("$.fuente").value("api"));
+                .andExpect(jsonPath("$.fuente").value("api"))
+                .andExpect(jsonPath("$.origen").value("automatico"));
     }
 
     @Test

@@ -2,12 +2,14 @@ package com.memelomanos.finderconciertos.service;
 
 import com.memelomanos.finderconciertos.exception.ArtistaSinSoundCloudException;
 import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud;
+import com.memelomanos.finderconciertos.integracion.soundcloud.NombresSoundCloud;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudOEmbedCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudPropiedades;
 import com.memelomanos.finderconciertos.model.Concierto;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
@@ -19,10 +21,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Obtiene el perfil de SoundCloud de un artista siguiendo ADR-005:
- * primero con la API (Plan A, si hay credenciales) y, si no se puede,
- * con oEmbed y la URL guardada en sus conciertos (Plan B). Las
- * respuestas se guardan en memoria para no repetir llamadas.
+ * Obtiene el perfil de SoundCloud de un artista siguiendo ADR-005, en
+ * este orden:
+ * <ol>
+ *   <li>la soundcloudUrl capturada a mano en sus conciertos, con oEmbed;</li>
+ *   <li>la API, si hay credenciales (Plan A);</li>
+ *   <li>las URLs mas probables segun el nombre, con oEmbed (Plan C).</li>
+ * </ol>
+ * Las respuestas, tambien las de "no encontrado", se guardan en memoria
+ * para no repetir llamadas.
  */
 @Service
 public class ArtistaService {
@@ -69,61 +76,106 @@ public class ArtistaService {
             throw new IllegalArgumentException("El nombre del artista no puede estar vacío");
         }
 
-        String clave = nombreLimpio.toLowerCase(Locale.ROOT);
+        // La URL manual forma parte de la clave: si alguien la captura o la
+        // corrige, la siguiente visita ya no usa lo que estaba en cache.
+        Optional<String> urlManual = urlGuardada(nombreLimpio);
+        String clave = nombreLimpio.toLowerCase(Locale.ROOT) + urlManual.map(url -> " " + url).orElse("");
         Instant ahora = reloj.instant();
         EntradaCache guardada = cache.get(clave);
         if (guardada != null && ahora.isBefore(guardada.venceEn())) {
-            return guardada.datos();
+            return guardada.datos().orElseThrow(() -> noEncontrado(nombreLimpio));
         }
 
-        ArtistaSoundCloud datos = buscarConApi(nombreLimpio)
-                .or(() -> buscarConOEmbed(nombreLimpio))
-                .orElseThrow(() -> new ArtistaSinSoundCloudException(
-                        "No encontramos a " + nombreLimpio + " en SoundCloud"));
+        RegistroDeFallas fallas = new RegistroDeFallas();
+        Optional<ArtistaSoundCloud> datos = urlManual
+                .flatMap(url -> buscarConUrlManual(nombreLimpio, url, fallas))
+                .or(() -> buscarConApi(nombreLimpio, fallas))
+                .or(() -> buscarConCandidatas(nombreLimpio, fallas));
 
-        guardarEnCache(clave, datos, ahora);
-        return datos;
+        if (datos.isPresent()) {
+            guardarEnCache(clave, datos, ahora, propiedades.duracionCache());
+            return datos.get();
+        }
+        // Si SoundCloud fallo no sabemos si el artista existe, asi que no
+        // recordamos el "no encontrado" y la siguiente visita lo vuelve a intentar.
+        if (!fallas.hubo) {
+            guardarEnCache(clave, Optional.empty(), ahora, propiedades.duracionCacheNoEncontrados());
+        }
+        throw noEncontrado(nombreLimpio);
     }
 
-    private Optional<ArtistaSoundCloud> buscarConApi(String nombre) {
+    private Optional<String> urlGuardada(String nombre) {
+        return conciertoRepository
+                .findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull(nombre)
+                .map(Concierto::getSoundcloudUrl);
+    }
+
+    private Optional<ArtistaSoundCloud> buscarConUrlManual(String nombre, String perfilUrl,
+                                                         RegistroDeFallas fallas) {
+        try {
+            return oEmbedCliente.obtenerReproductor(nombre, perfilUrl);
+        } catch (RuntimeException ex) {
+            // Puede ser una URL mal capturada o que SoundCloud no respondio:
+            // seguimos con la busqueda por nombre en lugar de responder 500.
+            log.warn("oEmbed de SoundCloud fallo para '{}': {}", perfilUrl, ex.getMessage());
+            fallas.hubo = true;
+            return Optional.empty();
+        }
+    }
+
+    private Optional<ArtistaSoundCloud> buscarConApi(String nombre, RegistroDeFallas fallas) {
         if (!soundCloudCliente.estaConfigurado()) {
             return Optional.empty();
         }
         try {
             return soundCloudCliente.buscarArtista(nombre);
         } catch (RuntimeException ex) {
-            // Si la API falla (token rechazado, limite alcanzado, timeout)
-            // seguimos con el Plan B en lugar de responder 500.
+            // Token rechazado, limite alcanzado o timeout: seguimos con el Plan C.
             log.warn("La API de SoundCloud fallo al buscar '{}': {}", nombre, ex.getMessage());
+            fallas.hubo = true;
             return Optional.empty();
         }
     }
 
-    private Optional<ArtistaSoundCloud> buscarConOEmbed(String nombre) {
-        Optional<String> perfilUrl = conciertoRepository
-                .findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull(nombre)
-                .map(Concierto::getSoundcloudUrl);
-        if (perfilUrl.isEmpty()) {
-            return Optional.empty();
+    // Se detiene en la primera candidata que coincide. Si SoundCloud falla
+    // (no un 404), tampoco sigue: las demas fallarian igual y cada una
+    // puede tardar hasta el timeout.
+    private Optional<ArtistaSoundCloud> buscarConCandidatas(String nombre, RegistroDeFallas fallas) {
+        for (String perfilUrl : NombresSoundCloud.candidatas(nombre)) {
+            try {
+                Optional<ArtistaSoundCloud> encontrado = oEmbedCliente.buscarPerfil(nombre, perfilUrl);
+                if (encontrado.isPresent()) {
+                    return encontrado;
+                }
+            } catch (RuntimeException ex) {
+                log.warn("oEmbed de SoundCloud fallo para '{}': {}", perfilUrl, ex.getMessage());
+                fallas.hubo = true;
+                return Optional.empty();
+            }
         }
-        try {
-            return oEmbedCliente.obtenerReproductor(nombre, perfilUrl.get());
-        } catch (RuntimeException ex) {
-            log.warn("oEmbed de SoundCloud fallo para '{}': {}", perfilUrl.get(), ex.getMessage());
-            return Optional.empty();
-        }
+        return Optional.empty();
     }
 
-    private void guardarEnCache(String clave, ArtistaSoundCloud datos, Instant ahora) {
+    private static ArtistaSinSoundCloudException noEncontrado(String nombre) {
+        return new ArtistaSinSoundCloudException("No encontramos a " + nombre + " en SoundCloud");
+    }
+
+    private void guardarEnCache(String clave, Optional<ArtistaSoundCloud> datos,
+                                Instant ahora, Duration duracion) {
         if (cache.size() >= MAXIMO_EN_CACHE) {
             cache.values().removeIf(entrada -> !ahora.isBefore(entrada.venceEn()));
             if (cache.size() >= MAXIMO_EN_CACHE) {
                 cache.clear();
             }
         }
-        cache.put(clave, new EntradaCache(datos, ahora.plus(propiedades.duracionCache())));
+        cache.put(clave, new EntradaCache(datos, ahora.plus(duracion)));
     }
 
-    private record EntradaCache(ArtistaSoundCloud datos, Instant venceEn) {
+    private record EntradaCache(Optional<ArtistaSoundCloud> datos, Instant venceEn) {
+    }
+
+    // Anota si algun plan fallo por SoundCloud (y no porque el artista no exista).
+    private static final class RegistroDeFallas {
+        private boolean hubo;
     }
 }

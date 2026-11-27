@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import com.memelomanos.finderconciertos.RelojDePrueba;
 import com.memelomanos.finderconciertos.exception.ArtistaSinSoundCloudException;
 import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud;
+import com.memelomanos.finderconciertos.integracion.soundcloud.ArtistaSoundCloud.Origen;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudOEmbedCliente;
 import com.memelomanos.finderconciertos.integracion.soundcloud.SoundCloudPropiedades;
@@ -27,15 +28,24 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClientException;
 
+// Los mocks de Mockito regresan Optional.empty() por defecto, asi que un
+// metodo sin "when" equivale a "SoundCloud no encontro nada".
 @DisplayName("Servicio de Artistas (SoundCloud)")
 class ArtistaServiceTest {
 
     private static final String PERFIL = "https://soundcloud.com/queen";
+    private static final String BAD_BUNNY_JUNTO = "https://soundcloud.com/badbunny";
+    private static final String BAD_BUNNY_GUIONES = "https://soundcloud.com/bad-bunny";
 
+    private final ArtistaSoundCloud manual = new ArtistaSoundCloud(
+            "Queen", PERFIL, null, "https://w.soundcloud.com/player/?url=manual", List.of(),
+            "oembed", Origen.MANUAL);
     private final ArtistaSoundCloud desdeApi = new ArtistaSoundCloud(
-            "Queen", PERFIL, null, "https://w.soundcloud.com/player/?url=api", List.of(), "api");
-    private final ArtistaSoundCloud desdeOEmbed = new ArtistaSoundCloud(
-            "Queen", PERFIL, null, "https://w.soundcloud.com/player/?url=oembed", List.of(), "oembed");
+            "Queen", PERFIL, null, "https://w.soundcloud.com/player/?url=api", List.of(),
+            "api", Origen.API);
+    private final ArtistaSoundCloud automatico = new ArtistaSoundCloud(
+            "Bad Bunny", BAD_BUNNY_GUIONES, null, "https://w.soundcloud.com/player/?url=auto", List.of(),
+            "oembed", Origen.AUTOMATICO);
 
     private SoundCloudCliente api;
     private SoundCloudOEmbedCliente oEmbed;
@@ -50,7 +60,8 @@ class ArtistaServiceTest {
         conciertoRepository = mock(ConciertoRepository.class);
         reloj = new RelojDePrueba(Instant.parse("2026-11-07T12:00:00Z"));
         SoundCloudPropiedades propiedades = new SoundCloudPropiedades(
-                null, null, null, null, null, 5, Duration.ofHours(24), Duration.ofSeconds(5));
+                null, null, null, null, null, 5, Duration.ofHours(24), Duration.ofHours(6),
+                Duration.ofSeconds(5));
         servicio = new ArtistaService(api, oEmbed, conciertoRepository, propiedades, reloj);
     }
 
@@ -61,61 +72,91 @@ class ArtistaServiceTest {
                 .thenReturn(Optional.of(concierto));
     }
 
+    // Orden de prioridad
+
     @Test
-    @DisplayName("Usa la API cuando hay credenciales (Plan A)")
+    @DisplayName("La URL guardada a mano gana aunque haya credenciales")
+    void obtener_ConUrlManual_GanaSobreLaApi() {
+        when(api.estaConfigurado()).thenReturn(true);
+        conPerfilGuardado();
+        when(oEmbed.obtenerReproductor("Queen", PERFIL)).thenReturn(Optional.of(manual));
+
+        assertThat(servicio.obtenerSoundCloud(" Queen ")).isEqualTo(manual);
+        verify(api, never()).buscarArtista(anyString());
+        verify(oEmbed, never()).buscarPerfil(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Sin URL manual usa la API cuando hay credenciales (Plan A)")
     void obtener_ConCredenciales_UsaApi() {
         when(api.estaConfigurado()).thenReturn(true);
         when(api.buscarArtista("Queen")).thenReturn(Optional.of(desdeApi));
 
-        assertThat(servicio.obtenerSoundCloud(" Queen ")).isEqualTo(desdeApi);
-        verify(oEmbed, never()).obtenerReproductor(anyString(), anyString());
+        assertThat(servicio.obtenerSoundCloud("Queen")).isEqualTo(desdeApi);
+        verify(oEmbed, never()).buscarPerfil(anyString(), anyString());
     }
 
     @Test
-    @DisplayName("Sin credenciales usa oEmbed con la URL guardada (Plan B)")
-    void obtener_SinCredenciales_UsaOEmbed() {
-        when(api.estaConfigurado()).thenReturn(false);
+    @DisplayName("Si la URL manual falla, sigue con la API en lugar de responder 500")
+    void obtener_UrlManualFalla_UsaApi() {
+        when(api.estaConfigurado()).thenReturn(true);
         conPerfilGuardado();
-        when(oEmbed.obtenerReproductor("Queen", PERFIL)).thenReturn(Optional.of(desdeOEmbed));
+        when(oEmbed.obtenerReproductor("Queen", PERFIL)).thenThrow(new RestClientException("404 Not Found"));
+        when(api.buscarArtista("Queen")).thenReturn(Optional.of(desdeApi));
 
-        assertThat(servicio.obtenerSoundCloud("Queen")).isEqualTo(desdeOEmbed);
+        assertThat(servicio.obtenerSoundCloud("Queen")).isEqualTo(desdeApi);
+    }
+
+    @Test
+    @DisplayName("Si la API falla, sigue con las URLs probables (Plan C)")
+    void obtener_ApiFalla_UsaPlanC() {
+        when(api.estaConfigurado()).thenReturn(true);
+        when(api.buscarArtista("Bad Bunny")).thenThrow(new RestClientException("429 Too Many Requests"));
+        when(oEmbed.buscarPerfil("Bad Bunny", BAD_BUNNY_GUIONES)).thenReturn(Optional.of(automatico));
+
+        assertThat(servicio.obtenerSoundCloud("Bad Bunny")).isEqualTo(automatico);
+    }
+
+    // Plan C
+
+    @Test
+    @DisplayName("Sin credenciales prueba las URLs probables y se detiene en la primera que coincide")
+    void obtener_SinCredenciales_UsaPlanC() {
+        when(api.estaConfigurado()).thenReturn(false);
+        when(oEmbed.buscarPerfil("Bad Bunny", BAD_BUNNY_GUIONES)).thenReturn(Optional.of(automatico));
+
+        assertThat(servicio.obtenerSoundCloud("Bad Bunny")).isEqualTo(automatico);
+        verify(oEmbed).buscarPerfil("Bad Bunny", BAD_BUNNY_JUNTO);
+        verify(oEmbed).buscarPerfil("Bad Bunny", BAD_BUNNY_GUIONES);
+        verify(oEmbed, times(2)).buscarPerfil(anyString(), anyString());
         verify(api, never()).buscarArtista(anyString());
     }
 
     @Test
-    @DisplayName("Si la API falla, cae al Plan B en lugar de responder 500")
-    void obtener_ApiFalla_UsaOEmbed() {
-        when(api.estaConfigurado()).thenReturn(true);
-        when(api.buscarArtista("Queen")).thenThrow(new RestClientException("429 Too Many Requests"));
-        conPerfilGuardado();
-        when(oEmbed.obtenerReproductor("Queen", PERFIL)).thenReturn(Optional.of(desdeOEmbed));
-
-        assertThat(servicio.obtenerSoundCloud("Queen")).isEqualTo(desdeOEmbed);
-    }
-
-    @Test
-    @DisplayName("Lanza ArtistaSinSoundCloudException si no hay perfil")
+    @DisplayName("Si ninguna candidata coincide responde 404 (ArtistaSinSoundCloudException)")
     void obtener_SinPerfil_Lanza404() {
         when(api.estaConfigurado()).thenReturn(false);
-        when(conciertoRepository.findFirstByArtistaIgnoreCaseAndSoundcloudUrlIsNotNull("Nadie"))
-                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> servicio.obtenerSoundCloud("Nadie"))
                 .isInstanceOf(ArtistaSinSoundCloudException.class)
                 .hasMessage("No encontramos a Nadie en SoundCloud");
+        // "nadie" y "nadieofficial": el nombre de una palabra no genera guiones.
+        verify(oEmbed, times(2)).buscarPerfil(anyString(), anyString());
     }
 
     @Test
-    @DisplayName("Si oEmbed falla tambien responde 404, no 500")
-    void obtener_OEmbedFalla_Lanza404() {
+    @DisplayName("Si SoundCloud falla en el Plan C no prueba las demas candidatas y responde 404")
+    void obtener_PlanCFalla_SeDetieneYLanza404() {
         when(api.estaConfigurado()).thenReturn(false);
-        conPerfilGuardado();
-        when(oEmbed.obtenerReproductor("Queen", PERFIL))
+        when(oEmbed.buscarPerfil("Bad Bunny", BAD_BUNNY_JUNTO))
                 .thenThrow(new RestClientException("Connection timed out"));
 
-        assertThatThrownBy(() -> servicio.obtenerSoundCloud("Queen"))
+        assertThatThrownBy(() -> servicio.obtenerSoundCloud("Bad Bunny"))
                 .isInstanceOf(ArtistaSinSoundCloudException.class);
+        verify(oEmbed, times(1)).buscarPerfil(anyString(), anyString());
     }
+
+    // Cache
 
     @Test
     @DisplayName("Guarda la respuesta en cache por 24 horas")
@@ -132,6 +173,52 @@ class ArtistaServiceTest {
         reloj.avanzar(Duration.ofHours(2));
         servicio.obtenerSoundCloud("Queen");
         verify(api, times(2)).buscarArtista(anyString());
+    }
+
+    @Test
+    @DisplayName("Recuerda a los artistas no encontrados por 6 horas")
+    void obtener_NoEncontrado_UsaCacheHastaQueVence() {
+        when(api.estaConfigurado()).thenReturn(false);
+
+        assertThatThrownBy(() -> servicio.obtenerSoundCloud("Nadie"))
+                .isInstanceOf(ArtistaSinSoundCloudException.class);
+        reloj.avanzar(Duration.ofHours(5));
+        assertThatThrownBy(() -> servicio.obtenerSoundCloud("nadie"))
+                .isInstanceOf(ArtistaSinSoundCloudException.class)
+                .hasMessage("No encontramos a nadie en SoundCloud");
+        verify(oEmbed, times(2)).buscarPerfil(anyString(), anyString());
+
+        reloj.avanzar(Duration.ofHours(2));
+        assertThatThrownBy(() -> servicio.obtenerSoundCloud("Nadie"))
+                .isInstanceOf(ArtistaSinSoundCloudException.class);
+        verify(oEmbed, times(4)).buscarPerfil(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("No guarda el 'no encontrado' si SoundCloud fallo")
+    void obtener_SoundCloudFalla_NoGuardaEnCache() {
+        when(api.estaConfigurado()).thenReturn(false);
+        when(oEmbed.buscarPerfil(anyString(), anyString()))
+                .thenThrow(new RestClientException("Connection timed out"));
+
+        assertThatThrownBy(() -> servicio.obtenerSoundCloud("Queen"))
+                .isInstanceOf(ArtistaSinSoundCloudException.class);
+        assertThatThrownBy(() -> servicio.obtenerSoundCloud("Queen"))
+                .isInstanceOf(ArtistaSinSoundCloudException.class);
+        verify(oEmbed, times(2)).buscarPerfil(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Capturar la URL a mano reemplaza un 'no encontrado' guardado en cache")
+    void obtener_UrlManualNueva_IgnoraLaCacheAnterior() {
+        when(api.estaConfigurado()).thenReturn(false);
+        assertThatThrownBy(() -> servicio.obtenerSoundCloud("Queen"))
+                .isInstanceOf(ArtistaSinSoundCloudException.class);
+
+        conPerfilGuardado();
+        when(oEmbed.obtenerReproductor("Queen", PERFIL)).thenReturn(Optional.of(manual));
+
+        assertThat(servicio.obtenerSoundCloud("Queen")).isEqualTo(manual);
     }
 
     @Test

@@ -18,7 +18,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-@DisplayName("Cliente oEmbed de SoundCloud (Plan B)")
+@DisplayName("Cliente oEmbed de SoundCloud (URL manual y Plan C)")
 class SoundCloudOEmbedClienteTest {
 
     private static final String PERFIL = "https://soundcloud.com/queen";
@@ -41,7 +41,8 @@ class SoundCloudOEmbedClienteTest {
         servidor = MockRestServiceServer.bindTo(builder).build();
         SoundCloudPropiedades propiedades = new SoundCloudPropiedades(
                 null, null, "https://api.soundcloud.com", "https://secure.soundcloud.com",
-                "https://soundcloud.com/oembed", 5, Duration.ofHours(24), Duration.ofSeconds(5));
+                "https://soundcloud.com/oembed", 5, Duration.ofHours(24), Duration.ofHours(6),
+                Duration.ofSeconds(5));
         cliente = new SoundCloudOEmbedCliente(builder.build(), propiedades);
     }
 
@@ -61,6 +62,7 @@ class SoundCloudOEmbedClienteTest {
         assertThat(artista.avatarUrl()).isEqualTo("https://i1.sndcdn.com/avatars-queen.jpg");
         assertThat(artista.pistas()).isEmpty();
         assertThat(artista.fuente()).isEqualTo("oembed");
+        assertThat(artista.origen()).isEqualTo(ArtistaSoundCloud.Origen.MANUAL);
     }
 
     @Test
@@ -70,6 +72,48 @@ class SoundCloudOEmbedClienteTest {
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
 
         assertThatThrownBy(() -> cliente.obtenerReproductor("Queen", PERFIL))
+                .isInstanceOf(RestClientException.class);
+    }
+
+    @Test
+    @DisplayName("Plan C: acepta el perfil si su nombre coincide con el del artista")
+    void buscarPerfil_NombreCoincide_RegresaAutomatico() {
+        servidor.expect(requestTo(startsWith("https://soundcloud.com/oembed?format=json&url=")))
+                .andRespond(withSuccess(OEMBED, MediaType.APPLICATION_JSON));
+
+        Optional<ArtistaSoundCloud> resultado = cliente.buscarPerfil("QUEEN", PERFIL);
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get().origen()).isEqualTo(ArtistaSoundCloud.Origen.AUTOMATICO);
+        assertThat(resultado.get().perfilUrl()).isEqualTo(PERFIL);
+    }
+
+    @Test
+    @DisplayName("Plan C: rechaza el perfil si es de alguien con otro nombre")
+    void buscarPerfil_OtroNombre_RegresaVacio() {
+        servidor.expect(requestTo(startsWith("https://soundcloud.com/oembed")))
+                .andRespond(withSuccess(OEMBED.replace("\"author_name\": \"Queen\"",
+                        "\"author_name\": \"Queen Tributo MX\""), MediaType.APPLICATION_JSON));
+
+        assertThat(cliente.buscarPerfil("Queen", PERFIL)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Plan C: una URL que no existe (404) regresa vacio, sin lanzar")
+    void buscarPerfil_NoExiste_RegresaVacio() {
+        servidor.expect(requestTo(startsWith("https://soundcloud.com/oembed")))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        assertThat(cliente.buscarPerfil("Queen", PERFIL)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Plan C: si SoundCloud falla (no un 404) lanza RestClientException")
+    void buscarPerfil_SoundCloudFalla_Lanza() {
+        servidor.expect(requestTo(startsWith("https://soundcloud.com/oembed")))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThatThrownBy(() -> cliente.buscarPerfil("Queen", PERFIL))
                 .isInstanceOf(RestClientException.class);
     }
 
