@@ -11,6 +11,7 @@ const props = defineProps({
 })
 
 const WIDGET = 'https://w.soundcloud.com/player/'
+const BUSQUEDA_PERSONAS = 'https://soundcloud.com/search/people'
 
 const abierto = ref(false)
 const cargando = ref(false)
@@ -34,6 +35,13 @@ const urlWidget = computed(() => {
 })
 
 const altoWidget = computed(() => (pistaActual.value ? 166 : 300))
+
+// Si el backend no encontro el perfil, o lo dedujo del nombre (#111), el
+// usuario puede buscarlo el mismo en SoundCloud.
+const urlBusqueda = computed(
+  () => `${BUSQUEDA_PERSONAS}?q=${encodeURIComponent(props.artista)}`,
+)
+const esAutomatico = computed(() => datos.value?.origen === 'automatico')
 
 async function cargar() {
   const numero = ++peticionActual
@@ -100,9 +108,19 @@ watch(
     <div v-else class="contenido" aria-live="polite" :aria-busy="cargando">
       <p v-if="cargando" class="texto-suave">Buscando a {{ artista }} en SoundCloud…</p>
 
-      <p v-else-if="sinPerfil" class="texto-suave">
-        Este artista no tiene perfil en SoundCloud.
-      </p>
+      <div v-else-if="sinPerfil" class="estado-sin-perfil">
+        <p class="texto-suave">
+          No encontramos a {{ artista }} en SoundCloud.
+        </p>
+        <a
+          :href="urlBusqueda"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="boton"
+        >
+          Buscar en SoundCloud <span aria-hidden="true">↗</span>
+        </a>
+      </div>
 
       <div v-else-if="error" class="estado-error">
         <p class="aviso aviso-error" role="alert">
@@ -125,6 +143,15 @@ watch(
             <strong>{{ datos.artista }}</strong>
             <a :href="datos.perfilUrl" target="_blank" rel="noopener noreferrer">
               Ver perfil en SoundCloud <span aria-hidden="true">↗</span>
+            </a>
+            <a
+              v-if="esAutomatico"
+              :href="urlBusqueda"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="otro-artista"
+            >
+              ¿No es este artista? Buscar en SoundCloud <span aria-hidden="true">↗</span>
             </a>
           </div>
         </div>
@@ -188,11 +215,17 @@ watch(
   margin: 0;
 }
 
-.estado-error {
+.estado-error,
+.estado-sin-perfil {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
+}
+
+a.boton {
+  text-decoration: none;
+  display: inline-block;
 }
 
 .perfil {
@@ -218,6 +251,10 @@ watch(
 
 .perfil-texto a {
   font-size: 14px;
+}
+
+.perfil-texto .otro-artista {
+  color: var(--color-suave);
 }
 
 .widget {

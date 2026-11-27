@@ -3,7 +3,8 @@ import { pedir } from './cliente'
 
 /**
  * GET /artistas/{nombre}/soundcloud -> { artista, perfilUrl, avatarUrl,
- * widgetUrl, pistas: [{ titulo, url, duracionMs }], fuente } (#81).
+ * widgetUrl, pistas: [{ titulo, url, duracionMs }], fuente, origen } (#81).
+ * origen es 'manual', 'api' o 'automatico' (#111).
  * Responde 404 si el artista no tiene perfil en SoundCloud o si SoundCloud
  * no respondio. Es publico, asi que no manda el token.
  */
