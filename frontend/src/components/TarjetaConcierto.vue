@@ -2,7 +2,9 @@
 import { RouterLink } from 'vue-router'
 import BotonFavorito from '@/components/BotonFavorito.vue'
 import { formatearFecha } from '@/utils/fechas'
-import imagenPredeterminada from '@/assets/concierto-default.png'
+// Foto de Nainoa Shizuru en Unsplash (licencia de Unsplash):
+// https://unsplash.com/photos/NcdG9mK3PBY
+import imagenPredeterminada from '@/assets/concierto-default.jpg'
 
 defineProps({
   concierto: {
