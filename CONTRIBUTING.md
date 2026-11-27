@@ -142,6 +142,38 @@ Las API keys (Ticketmaster, SoundCloud, etc.) **nunca** se suben al repo.
 Se leen de variables de entorno y se documentan en `.env.example` con
 valores falsos.
 
+### PRs de Dependabot
+
+Cada lunes, Dependabot revisa las dependencias de Maven (`pom.xml`), npm
+(`frontend/`) y GitHub Actions, y abre PRs con el prefijo `chore(deps):`
+(configuración en `.github/dependabot.yml`). Las versiones menores y de
+parche llegan juntas en un solo PR por ecosistema. Cada versión mayor llega
+en su propio PR.
+
+Los revisa la persona de turno de esa semana, que va rotando cada lunes en
+este orden:
+
+| Semana que empieza el | De turno |
+| --------------------- | -------- |
+| 30 nov 2026 | Sofía (`soffochoa`) |
+| 7 dic 2026 | Saúl (`Saulssof`) |
+| 14 dic 2026 | Ihebel (`IhebelTenorio`) |
+| 21 dic 2026 | Miguel (`Sensationalforge`) |
+| 28 dic 2026 | Ricardo (`ricardobuendiaa`) |
+
+Después se repite el mismo orden. Si te toca y no puedes, avísale a la
+siguiente persona de la lista.
+
+- Solo se mergean con el CI (`Tests` y `Frontend`) **en verde**. Quien está
+  de turno aprueba y hace el *Squash and merge*.
+- Si el CI falla, no lo mergees: comenta qué se rompió y abre un issue si
+  arreglarlo requiere cambiar código.
+- En una versión mayor, lee las notas de la versión (el PR trae el enlace)
+  antes de aprobar. Si el cambio es grande, pídele una segunda revisión a
+  quien conozca mejor esa parte.
+- Las alertas de seguridad aparecen en **Security → Dependabot alerts**.
+  Revísalas durante tu semana.
+
 ### Qué revisar
 
 - Verifica que el sistema funcione tal cual lo describe el requester
