@@ -116,28 +116,37 @@ Para agregar un caso nuevo, crea la excepción en `exception/` y añade un
 ### Integración con SoundCloud
 
 `GET /api/v1/artistas/{nombre}/soundcloud` lo atiende `ArtistaController`,
-que llama a `ArtistaService`. El servicio decide qué plan usar (ADR-005):
+que llama a `ArtistaService`. El servicio prueba en orden (ADR-005):
 
 ```mermaid
 flowchart TD
-    A["ArtistaService.obtenerSoundCloud(nombre)"] --> C{"¿Está en la caché<br/>y no han pasado 24 h?"}
-    C -- sí --> R["200 + ArtistaSoundCloud"]
-    C -- no --> K{"¿Hay credenciales?"}
-    K -- sí --> PA["Plan A: SoundCloudCliente<br/>token Client Credentials + /users + /tracks"]
-    K -- no --> PB
-    PA -- "encontrado" --> G["Guardar en caché"] --> R
-    PA -- "no encontrado o falla" --> PB["Plan B: soundcloudUrl del concierto<br/>+ SoundCloudOEmbedCliente"]
-    PB -- "encontrado" --> G
-    PB -- "sin URL o falla" --> E["404 + ErrorRespuesta"]
+    A["ArtistaService.obtenerSoundCloud(nombre)"] --> C{"¿Está en la caché<br/>y no ha vencido?"}
+    C -- "sí, encontrado" --> R["200 + ArtistaSoundCloud"]
+    C -- "sí, no encontrado" --> E
+    C -- no --> M{"¿Algún concierto tiene<br/>soundcloudUrl?"}
+    M -- sí --> PM["URL manual + SoundCloudOEmbedCliente<br/>origen: manual"]
+    M -- no --> K
+    PM -- "encontrado" --> G["Guardar en caché"] --> R
+    PM -- "falla" --> K{"¿Hay credenciales?"}
+    K -- sí --> PA["Plan A: SoundCloudCliente<br/>token + /users + /tracks<br/>origen: api"]
+    K -- no --> PC
+    PA -- "encontrado" --> G
+    PA -- "no encontrado o falla" --> PC["Plan C: URLs deducidas del nombre<br/>+ SoundCloudOEmbedCliente<br/>origen: automatico"]
+    PC -- "nombre coincide" --> G
+    PC -- "ninguna coincide" --> N["Guardar 'no encontrado'<br/>en caché (6 h)"] --> E["404 + ErrorRespuesta"]
+    PC -- "SoundCloud falló" --> E
 ```
 
 - **Token:** `SoundCloudCliente` guarda el token en memoria y lo reutiliza
   hasta un minuto antes de que venza; después lo renueva con el refresh
   token. SoundCloud solo da 50 tokens nuevos cada 12 horas por app.
-- **Caché:** `ArtistaService` guarda cada respuesta exitosa por artista
-  (`soundcloud.duracion-cache`, 24 h por defecto), con un tope de 500
-  artistas. Las fallas no se guardan, para reintentar en la siguiente
-  petición.
+- **Caché:** `ArtistaService` guarda cada respuesta por artista, con un
+  tope de 500 artistas: las exitosas por `soundcloud.duracion-cache` (24 h
+  por defecto) y los "no encontrado" por
+  `soundcloud.duracion-cache-no-encontrados` (6 h por defecto). Si
+  SoundCloud falló no se guarda nada, para reintentar en la siguiente
+  petición. La `soundcloudUrl` forma parte de la clave, así que capturarla
+  se ve de inmediato.
 - **Errores:** cualquier falla de SoundCloud (timeout de 5 s, `401`, `429`)
   se registra en el log y termina en `404`, nunca en `500`.
 - **Seguridad:** el `client_secret` solo vive en variables de entorno y en
