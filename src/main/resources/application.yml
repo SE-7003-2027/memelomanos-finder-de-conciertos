@@ -10,7 +10,10 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      # El esquema lo crean las migraciones de Flyway (db/migration, ADR-008).
+      # Hibernate solo revisa que las entidades coincidan con la base: si
+      # no coinciden, la aplicacion no arranca.
+      ddl-auto: validate
 
 jwt:
   secret: ${JWT_SECRET:clave_secreta_por_defecto_para_desarrollo_local_de_al_menos_256_bits_memelomanos_finder_conciertos}
