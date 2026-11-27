@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,6 +37,10 @@ public class Concierto {
     private String ciudad;
     private String lugar;
     private String soundcloudUrl;
+
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    private boolean disponible = true;
 
     private String fuente;
 
@@ -111,6 +116,14 @@ public class Concierto {
 
     public void setSoundcloudUrl(String soundcloudUrl) {
         this.soundcloudUrl = soundcloudUrl;
+    }
+
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
     }
 
     public String getFuente() {

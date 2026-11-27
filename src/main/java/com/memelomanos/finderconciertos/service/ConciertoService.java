@@ -10,7 +10,10 @@ import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import com.memelomanos.finderconciertos.repository.UsuarioRepository;
 import java.util.List;
 import java.util.Objects;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
@@ -22,10 +25,20 @@ public class ConciertoService {
     private final ConciertoRepository conciertoRepository;
     private final UsuarioRepository usuarioRepository;
 
+    private final Clock reloj;
+
+    @Autowired
     public ConciertoService(ConciertoRepository conciertoRepository,
                             UsuarioRepository usuarioRepository) {
+        this(conciertoRepository, usuarioRepository,
+                Clock.system(ZoneId.of("America/Mexico_City")));
+    }
+
+    ConciertoService(ConciertoRepository conciertoRepository,
+                     UsuarioRepository usuarioRepository, Clock reloj) {
         this.conciertoRepository = conciertoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.reloj = reloj;
     }
 
     @Transactional(readOnly = true)
@@ -40,9 +53,10 @@ public class ConciertoService {
         LocalDate fechaDesde,
         LocalDate fechaHasta) {
 
-    Specification<Concierto> filtros =
-            (concierto, busqueda, constructor) ->
-                    constructor.conjunction();
+    LocalDate inicio = fechaDesde != null ? fechaDesde : LocalDate.now(reloj);
+    Specification<Concierto> filtros = ConciertoSpecifications.desdeFecha(inicio)
+            .and((concierto, consulta, constructor) ->
+                    constructor.isTrue(concierto.get("disponible")));
 
     if (artista != null && !artista.isBlank()) {
         filtros = filtros.and(
@@ -52,11 +66,6 @@ public class ConciertoService {
     if (ciudad != null && !ciudad.isBlank()) {
         filtros = filtros.and(
                 ConciertoSpecifications.porCiudad(ciudad));
-    }
-
-    if (fechaDesde != null) {
-        filtros = filtros.and(
-                ConciertoSpecifications.desdeFecha(fechaDesde));
     }
 
     if (fechaHasta != null) {

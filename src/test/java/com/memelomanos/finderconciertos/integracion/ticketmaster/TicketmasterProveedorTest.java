@@ -64,6 +64,28 @@ class TicketmasterProveedorTest {
         servidor.verify();
     }
 
+    @Test
+    void identificaUnEventoCanceladoEnElCatalogo() {
+        var builder = RestClient.builder();
+        var servidor = MockRestServiceServer.bindTo(builder).build();
+        var proveedor = new TicketmasterProveedor(new TicketmasterCliente(builder, "clave-de-prueba"));
+        servidor.expect(queryParam("page", "0")).andRespond(withSuccess("""
+                {
+                  "_embedded": { "events": [
+                    { "id": "cancelado", "dates": { "status": { "code": "canceled" } } },
+                    { "id": "vigente" }
+                  ] },
+                  "page": { "number": 0, "totalPages": 1, "totalElements": 2 }
+                }
+                """, MediaType.APPLICATION_JSON));
+
+        var catalogo = proveedor.descargarCatalogo();
+
+        assertThat(catalogo.completo()).isTrue();
+        assertThat(catalogo.cancelados()).containsExactly("cancelado");
+        servidor.verify();
+    }
+
     @ParameterizedTest
     @CsvSource({"true,''", "true,'   '", "false,clave-de-prueba"})
     void noConstruyeElClienteCuandoEstaDeshabilitado(boolean habilitado, String apiKey) {

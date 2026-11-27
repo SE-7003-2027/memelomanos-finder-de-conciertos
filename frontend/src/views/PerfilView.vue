@@ -1,7 +1,7 @@
 <script setup>
 // Vista de perfil (issue #52): ver y editar datos, eliminar la cuenta y
 // administrar los conciertos favoritos.
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { actualizarUsuario, eliminarUsuario } from '@/api/usuarios'
 import {
@@ -9,6 +9,7 @@ import {
   actualizarDatos,
   cerrarSesion,
   quitarFavorito,
+  recargarFavoritos,
   verificarPassword,
 } from '@/stores/usuario'
 import { validarDatosUsuario } from '@/utils/validacion'
@@ -91,6 +92,19 @@ async function eliminarCuenta() {
 // --- Favoritos ---
 const quitando = ref(null)
 const errorFavoritos = ref('')
+const cargandoFavoritos = ref(true)
+// La API devuelve fechas YYYY-MM-DD; comparamos con el día en la misma zona que el backend.
+const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Mexico_City' })
+
+onMounted(async () => {
+  try {
+    await recargarFavoritos()
+  } catch (e) {
+    errorFavoritos.value = e.message
+  } finally {
+    cargandoFavoritos.value = false
+  }
+})
 
 async function quitar(concierto) {
   quitando.value = concierto.id
@@ -151,11 +165,15 @@ function salir() {
               <span class="texto-suave">
                 {{ formatearFecha(concierto.fecha) }} · {{ concierto.lugar }}, {{ concierto.ciudad }}
               </span>
+              <span v-if="concierto.disponible === false" class="estado-favorito">No disponible</span>
+              <span v-else-if="concierto.fecha && concierto.fecha < hoy" class="estado-favorito">
+                Concierto pasado
+              </span>
             </div>
             <button
               type="button"
               class="boton"
-              :disabled="quitando === concierto.id"
+              :disabled="cargandoFavoritos || quitando === concierto.id"
               :aria-label="`Quitar ${concierto.artista} de favoritos`"
               @click="quitar(concierto)"
             >
@@ -293,6 +311,12 @@ function salir() {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.estado-favorito {
+  color: var(--color-suave);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .datos {

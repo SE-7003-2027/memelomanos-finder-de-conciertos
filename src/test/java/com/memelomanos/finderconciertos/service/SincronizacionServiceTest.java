@@ -7,6 +7,9 @@ import com.memelomanos.finderconciertos.model.Usuario;
 import com.memelomanos.finderconciertos.repository.ConciertoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -16,10 +19,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -104,36 +109,70 @@ class SincronizacionServiceTest {
         verifyNoInteractions(repositorio);
     }
 
-    @Test
-    void consultaElProveedorAntesDeAbrirLaTransaccionYGuardaTodosLosDatos() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void consultaElProveedorAntesDeAbrirLaTransaccionYGuardaTodosLosDatos(boolean cancelado) {
         ConciertoRepository repositorio = mock(ConciertoRepository.class);
         TicketmasterProveedor proveedor = mock(TicketmasterProveedor.class);
         SincronizacionService servicio =
                 new SincronizacionService(repositorio, proveedor, gestorTransacciones);
-        when(proveedor.buscar(null, null, null, null)).thenReturn(List.of(new ConciertoExterno(
+        when(proveedor.descargarCatalogo()).thenReturn(new TicketmasterProveedor.Catalogo(
+                List.of(new ConciertoExterno(
                 "TICKETMASTER", "abc123", "Café Tacvba", LocalDate.of(2027, 3, 20),
                 "CDMX", "Recinto", "https://example.com/boletos",
                 "https://example.com/imagen.jpg", new BigDecimal("19.4241"),
                 new BigDecimal("-99.1949"), new BigDecimal("850.00")
-        )));
+        )), cancelado ? Set.of("abc123") : Set.of(), false));
         when(repositorio.findByFuenteAndIdExterno("TICKETMASTER", "abc123"))
                 .thenReturn(Optional.empty());
 
         assertThat(servicio.sincronizar()).isEqualTo(1);
 
         var orden = inOrder(proveedor, gestorTransacciones, repositorio);
-        orden.verify(proveedor).buscar(null, null, null, null);
+        orden.verify(proveedor).descargarCatalogo();
         orden.verify(gestorTransacciones).getTransaction(any());
         orden.verify(repositorio).findByFuenteAndIdExterno("TICKETMASTER", "abc123");
         ArgumentCaptor<Concierto> captura = ArgumentCaptor.forClass(Concierto.class);
         orden.verify(repositorio).save(captura.capture());
         orden.verify(gestorTransacciones).commit(estadoTransaccion);
         Concierto guardado = captura.getValue();
+        assertThat(guardado.isDisponible()).isEqualTo(!cancelado);
         assertThat(guardado.getLatitud()).isEqualByComparingTo("19.4241");
         assertThat(guardado.getLongitud()).isEqualByComparingTo("-99.1949");
         assertThat(guardado.getUrlCompra()).isEqualTo("https://example.com/boletos");
         assertThat(guardado.getImagenUrl()).isEqualTo("https://example.com/imagen.jpg");
         assertThat(guardado.getPrecioMinimo()).isEqualByComparingTo("850.00");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true, false", "false, false", "true, true"})
+    void soloMarcaAusentesConUnCatalogoCompletoYNoVacio(boolean completo, boolean vacio) {
+        ConciertoRepository repositorio = mock(ConciertoRepository.class);
+        TicketmasterProveedor proveedor = mock(TicketmasterProveedor.class);
+        SincronizacionService servicio =
+                new SincronizacionService(repositorio, proveedor, gestorTransacciones);
+        Concierto ausente = eventoEn("Recinto");
+        ReflectionTestUtils.setField(ausente, "id", 20L);
+        Usuario usuario = new Usuario("Ricardo", "ricardo@example.com");
+        usuario.agregarFavorito(ausente);
+
+        var recibido = new ConciertoExterno("TICKETMASTER", "otro-id", "Otro artista",
+                ausente.getFecha(), "CDMX", "Recinto", null, null, null, null, null);
+        var eventos = vacio ? List.<ConciertoExterno>of() : List.of(recibido);
+        when(proveedor.descargarCatalogo()).thenReturn(
+                new TicketmasterProveedor.Catalogo(eventos, Set.of(), completo));
+        when(repositorio.findByFuenteAndDisponibleTrueAndFechaGreaterThanEqual(
+                eq(TicketmasterProveedor.FUENTE), any(LocalDate.class)))
+                .thenReturn(List.of(ausente));
+
+        assertThat(servicio.sincronizar()).isEqualTo(eventos.size());
+
+        assertThat(ausente.isDisponible()).isEqualTo(!completo || vacio);
+        if (vacio) {
+            verifyNoInteractions(repositorio);
+        }
+        assertThat(usuario.getFavoritos()).containsExactly(ausente);
+        verify(repositorio, never()).delete(any(Concierto.class));
     }
 
     @Test

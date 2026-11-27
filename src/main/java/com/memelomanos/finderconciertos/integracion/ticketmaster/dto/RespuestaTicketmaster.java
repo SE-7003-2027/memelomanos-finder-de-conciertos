@@ -41,7 +41,10 @@ public record RespuestaTicketmaster(
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Fechas(Inicio start) {}
+    public record Fechas(Inicio start, Estado status) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Estado(String code) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Inicio(LocalDate localDate) {}
@@ -65,5 +68,5 @@ public record RespuestaTicketmaster(
     public record RangoPrecio(BigDecimal min) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Pagina(int number, int totalPages) {}
+    public record Pagina(Integer number, Integer totalPages, Integer totalElements) {}
 }

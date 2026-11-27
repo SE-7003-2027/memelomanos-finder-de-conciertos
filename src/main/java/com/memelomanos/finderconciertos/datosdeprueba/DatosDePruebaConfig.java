@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 /**
  * Esta clase solo sirve para tener datos de prueba mientras
@@ -26,12 +27,13 @@ public class DatosDePruebaConfig {
                 return;
             }
 
+            LocalDate hoy = LocalDate.now(ZoneId.of("America/Mexico_City"));
             conciertoRepository.save(new Concierto(
-                    "Queen", LocalDate.of(2026, 11, 20), "CDMX", "Foro Sol"));
+                    "Queen", hoy.plusDays(7), "CDMX", "Foro Sol"));
             conciertoRepository.save(new Concierto(
-                    "Bad Bunny", LocalDate.of(2026, 12, 5), "Guadalajara", "Estadio Akron"));
+                    "Bad Bunny", hoy.plusDays(22), "Guadalajara", "Estadio Akron"));
             conciertoRepository.save(new Concierto(
-                    "Queen tribute band", LocalDate.of(2027, 1, 15), "Monterrey", "Arena Monterrey"));
+                    "Queen tribute band", hoy.plusDays(63), "Monterrey", "Arena Monterrey"));
         };
     }
 }
