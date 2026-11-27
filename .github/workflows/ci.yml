@@ -11,6 +11,28 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
 
+    # PostgreSQL para EsquemaBaseDeDatosTest, que arranca la aplicacion y
+    # aplica las migraciones de Flyway en cada PR (ADR-008).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: finder_conciertos
+          POSTGRES_USER: usuario
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U usuario -d finder_conciertos"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/finder_conciertos
+      DB_USER: usuario
+      DB_PASSWORD: password
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

@@ -126,6 +126,44 @@ Crea una base de datos vacía llamada `finder_conciertos` (con pgAdmin o
 `createdb finder_conciertos`) y, al levantar el backend, pasa tu usuario
 y tu contraseña como variables de entorno.
 
+### Si tu base de datos es de antes de las migraciones
+
+Desde #101 el esquema lo crea Flyway
+([ADR-008](docs/adr/008-migraciones-de-base-de-datos.md)). Si tu base la
+creó Hibernate antes de ese cambio, el backend no arranca y muestra un
+error de Flyway como `Found non-empty schema(s) "public" but no schema
+history table`. Tienes dos opciones:
+
+**Recrear la base (recomendado).** Se borran los datos locales, pero los
+conciertos y usuarios de prueba se vuelven a cargar al arrancar.
+
+- Opción A (Docker del proyecto):
+
+  ```bash
+  docker compose down -v
+  docker compose up -d
+  ```
+
+- Opción B: borra la base y créala vacía otra vez.
+
+  ```sql
+  DROP DATABASE finder_conciertos;
+  CREATE DATABASE finder_conciertos OWNER app_conciertos;
+  ```
+
+- Opción C: `dropdb finder_conciertos && createdb finder_conciertos`.
+
+**Conservar los datos.** Arranca **una sola vez** con estas variables, para
+que Flyway tome tu base como si ya tuviera la versión 1:
+
+```bash
+SPRING_FLYWAY_BASELINEONMIGRATE=true SPRING_FLYWAY_BASELINEVERSION=1 ./mvnw spring-boot:run
+```
+
+Solo funciona si tu base tiene el mismo esquema que
+`V1__esquema_inicial.sql`. Si después el backend no arranca por un error de
+validación de Hibernate, recrea la base.
+
 ## 3. Levantar el backend
 
 Con la opción A:
@@ -214,6 +252,13 @@ en la wiki.
 
 ```bash
 ./mvnw test
+```
+
+`EsquemaBaseDeDatosTest` arranca la aplicación contra PostgreSQL y aplica
+las migraciones. Como necesita la base, solo corre si defines `DB_URL`:
+
+```bash
+DB_URL=jdbc:postgresql://localhost:5432/finder_conciertos ./mvnw test
 ```
 
 Al terminar, la consola muestra un resumen de puntaje por categoría de
