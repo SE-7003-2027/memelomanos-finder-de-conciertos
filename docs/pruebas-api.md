@@ -624,29 +624,43 @@ curl -i "http://localhost:8080/api/v1/artistas/Queen/soundcloud"
 Los nombres con espacios van codificados en la URL, por ejemplo
 `/artistas/Bad%20Bunny/soundcloud`. El nombre no distingue mayúsculas.
 
-Cómo responde depende de la configuración (ver ADR-005):
+El backend busca el perfil en este orden (ver ADR-005) y el campo
+`origen` de la respuesta indica cuál funcionó:
 
-- **Con credenciales** (`SOUNDCLOUD_CLIENT_ID` y `SOUNDCLOUD_CLIENT_SECRET`
-  definidas): busca al artista en la API de SoundCloud y regresa su perfil
-  con sus pistas más escuchadas (`"fuente": "api"`).
-- **Sin credenciales**: usa la `soundcloudUrl` guardada en algún concierto
-  del artista y regresa solo el reproductor (`"fuente": "oembed"`, `pistas`
-  vacía). Con los datos de prueba ningún concierto la tiene, así que la
-  primera llamada responde `404`. Para probarlo, agrégala a un concierto
-  con `PUT /conciertos/{id}` (requiere token, ver 3.11):
+1. **URL guardada a mano** (`"origen": "manual"`): la `soundcloudUrl` de
+   algún concierto del artista. Siempre gana, aunque haya credenciales,
+   porque una persona confirmó que es el artista correcto.
+2. **API de SoundCloud** (`"origen": "api"`), solo si están definidas
+   `SOUNDCLOUD_CLIENT_ID` y `SOUNDCLOUD_CLIENT_SECRET`: busca por nombre y
+   regresa también sus pistas más escuchadas (`"fuente": "api"`).
+3. **URLs probables** (`"origen": "automatico"`, Plan C): sin credenciales,
+   prueba hasta 4 URLs deducidas del nombre (`soundcloud.com/badbunny`,
+   `soundcloud.com/bad-bunny`, …) y acepta la primera cuyo nombre coincide
+   con el del artista. Solo regresa el reproductor (`"fuente": "oembed"`,
+   `pistas` vacía).
 
-  ```bash
-  curl -X PUT http://localhost:8080/api/v1/conciertos/1 \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer TU_TOKEN" \
-    -d '{
-      "artista": "Queen",
-      "fecha": "2026-11-20",
-      "ciudad": "CDMX",
-      "lugar": "Foro Sol",
-      "soundcloudUrl": "https://soundcloud.com/URL-DEL-ARTISTA"
-    }'
-  ```
+Para probar el Plan C basta con consultar un artista cuyo perfil esté en
+`soundcloud.com/<nombre>`:
+
+```bash
+curl -i "http://localhost:8080/api/v1/artistas/Bad%20Bunny/soundcloud"
+```
+
+Para probar la URL manual, agrégala a un concierto con
+`PUT /conciertos/{id}` (requiere token, ver 3.11):
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/conciertos/1 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TU_TOKEN" \
+  -d '{
+    "artista": "Queen",
+    "fecha": "2026-11-20",
+    "ciudad": "CDMX",
+    "lugar": "Foro Sol",
+    "soundcloudUrl": "https://soundcloud.com/URL-DEL-ARTISTA"
+  }'
+```
 
 Respuesta esperada:
 
@@ -663,7 +677,8 @@ Respuesta esperada:
   "pistas": [
     { "titulo": "Nombre de la pista", "url": "https://soundcloud.com/...", "duracionMs": 354000 }
   ],
-  "fuente": "api"
+  "fuente": "api",
+  "origen": "api"
 }
 ```
 
@@ -673,8 +688,11 @@ Si el artista no tiene perfil o SoundCloud no responde:
 404 Not Found
 ```
 
-La respuesta se guarda en caché 24 horas por artista: si cambias la
-`soundcloudUrl`, reinicia el backend para ver el cambio de inmediato.
+Las respuestas se guardan en caché por artista: 24 horas si se encontró
+el perfil y 6 horas si no se encontró. Si SoundCloud falló, el "no
+encontrado" no se guarda y la siguiente consulta lo vuelve a intentar. Al
+capturar o cambiar la `soundcloudUrl` la caché de ese artista ya no se
+usa, así que el cambio se ve en la siguiente consulta.
 
 ---
 
