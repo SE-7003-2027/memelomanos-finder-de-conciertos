@@ -27,14 +27,13 @@ import { usuarioActual } from '@/stores/usuario'
 
 <style scoped>
 .encabezado {
-  background: var(--color-superficie);
   border-bottom: 1px solid var(--color-borde);
 }
 
 .encabezado-interior {
-  max-width: 720px;
+  max-width: var(--ancho-pagina);
   margin: 0 auto;
-  padding: 14px 16px;
+  padding: 16px 20px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -43,24 +42,33 @@ import { usuarioActual } from '@/stores/usuario'
 }
 
 .marca {
-  font-weight: 800;
-  font-size: 18px;
+  font-family: var(--fuente-cartel);
+  font-weight: 900;
+  font-size: 26px;
+  line-height: 1;
   color: var(--color-texto);
   text-decoration: none;
 }
 
 nav {
   display: flex;
-  gap: 16px;
+  gap: 22px;
 }
 
 nav a {
-  text-decoration: none;
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
   color: var(--color-suave);
-  font-weight: 500;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+nav a:hover {
+  color: var(--color-texto);
 }
 
 nav a.router-link-exact-active {
-  color: var(--color-acento);
+  color: var(--color-texto);
+  border-bottom-color: var(--rosa);
 }
 </style>

@@ -1,12 +1,13 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import BotonFavorito from '@/components/BotonFavorito.vue'
-import { formatearFecha } from '@/utils/fechas'
+import { partesDeFecha } from '@/utils/fechas'
 // Foto de Nainoa Shizuru en Unsplash (licencia de Unsplash):
 // https://unsplash.com/photos/NcdG9mK3PBY
 import imagenPredeterminada from '@/assets/concierto-default.jpg'
 
-defineProps({
+const props = defineProps({
   concierto: {
     type: Object,
     required: true,
@@ -19,130 +20,189 @@ function usarImagenPredeterminada(event) {
   imagen.src = imagenPredeterminada
 }
 
+const fecha = computed(() => partesDeFecha(props.concierto.fecha))
 </script>
 
 <template>
+  <!-- Cada concierto se muestra como un boleto: foto, fecha y artista, y un
+       talon separado por una linea perforada con las acciones. -->
   <article class="tarjeta concierto">
+    <img
+      class="imagen-concierto"
+      :src="concierto.imagenUrl || imagenPredeterminada"
+      alt=""
+      @error="usarImagenPredeterminada"
+    />
+
     <RouterLink
       :to="{ name: 'concierto-detalle', params: { id: concierto.id } }"
-      class="enlace-detalle"
+      class="cuerpo"
     >
-    <img
-    class="imagen-concierto"
-    :src="concierto.imagenUrl || imagenPredeterminada"
-    :alt="`Imagen de ${concierto.artista}`"
-    @error="usarImagenPredeterminada"
-    />
-      <header class="cabecera">
-        <span class="ciudad">{{ concierto.ciudad }}</span>
+      <time v-if="fecha" class="fecha" :datetime="concierto.fecha">
+        <span class="dia">{{ fecha.dia }}</span>
+        <span class="mes">{{ fecha.mes }}</span>
+        <span class="anio">{{ fecha.anio }}</span>
+      </time>
+
+      <div class="info">
         <h2>{{ concierto.artista }}</h2>
-      </header>
-
-      <dl class="datos">
-        <div>
-          <dt>Fecha</dt>
-          <dd>
-            <time :datetime="concierto.fecha">
-              {{ formatearFecha(concierto.fecha) }}
-            </time>
-          </dd>
-        </div>
-
-        <div>
-          <dt>Lugar</dt>
-          <dd>{{ concierto.lugar }}</dd>
-        </div>
-      </dl>
-
-      <span class="ver-detalle">Ver detalle →</span>
+        <p class="lugar">{{ concierto.lugar }}, {{ concierto.ciudad }}</p>
+      </div>
     </RouterLink>
 
-    <footer class="acciones">
+    <footer class="talon">
+      <RouterLink
+        :to="{ name: 'concierto-detalle', params: { id: concierto.id } }"
+        class="boton boton-primario"
+      >
+        Ver detalle
+      </RouterLink>
       <BotonFavorito :concierto="concierto" />
     </footer>
   </article>
 </template>
 
 <style scoped>
+.concierto {
+  position: relative;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) auto;
+  padding: 0;
+  overflow: hidden;
+}
+
 .imagen-concierto {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: 8px;
-}
-.concierto {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
   height: 100%;
-  min-width: 0;
-  overflow-wrap: anywhere;
+  min-height: 150px;
+  object-fit: cover;
 }
 
-.enlace-detalle {
+.cuerpo {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 24px;
+  min-width: 0;
   color: inherit;
   text-decoration: none;
 }
 
-.enlace-detalle:hover h2 {
-  color: var(--color-acento);
+.cuerpo:hover h2 {
+  color: var(--rosa);
 }
 
-.enlace-detalle:focus-visible {
-  outline: 2px solid var(--color-acento);
-  outline-offset: 6px;
-  border-radius: 4px;
+.cuerpo:focus-visible {
+  outline: 2px solid var(--rosa);
+  outline-offset: -4px;
 }
 
-.cabecera {
+.fecha {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 64px;
+  font-family: var(--fuente-cartel);
+  line-height: 0.9;
 }
 
-.ciudad {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--color-acento-suave);
-  color: var(--color-acento);
-  font-size: 13px;
-  font-weight: 600;
+.dia {
+  font-size: 56px;
+  font-weight: 900;
 }
 
-.cabecera h2 {
+.mes {
   font-size: 22px;
+  font-weight: 700;
+  color: var(--rosa);
 }
 
-.datos {
+.anio {
+  margin-top: 4px;
+  font-family: var(--fuente-texto);
+  font-size: 13px;
+  color: var(--color-suave);
+}
+
+.info {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.info h2 {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+}
+
+.lugar {
+  margin: 6px 0 0;
+  color: var(--color-suave);
+}
+
+/* Talon: la linea punteada y los dos medios circulos simulan la
+   perforacion de un boleto de papel. */
+.talon {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 0;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+  padding: 20px 24px;
+  border-left: 2px dashed #cdb9a0;
 }
 
-.datos dt {
-  color: var(--color-suave);
-  font-size: 13px;
+.talon::before,
+.talon::after {
+  content: '';
+  position: absolute;
+  left: -12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--telon);
 }
 
-.datos dd {
-  margin: 2px 0 0;
+.talon::before {
+  top: -11px;
 }
 
-.ver-detalle {
-  color: var(--color-acento);
-  font-size: 14px;
-  font-weight: 600;
+.talon::after {
+  bottom: -11px;
 }
 
-.acciones {
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-borde);
+@media (max-width: 680px) {
+  .concierto {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .imagen-concierto {
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+  }
+
+  .talon {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    border-left: 0;
+    border-top: 2px dashed #cdb9a0;
+  }
+
+  .talon::before,
+  .talon::after {
+    top: -12px;
+    left: auto;
+  }
+
+  .talon::before {
+    left: -11px;
+  }
+
+  .talon::after {
+    right: -11px;
+    bottom: auto;
+  }
 }
 </style>

@@ -99,9 +99,9 @@ onMounted(() => {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .lista > li {
@@ -114,11 +114,5 @@ onMounted(() => {
 
 .estado-vacio p {
   margin: 8px 0 0;
-}
-
-@media (max-width: 600px) {
-  .lista {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 </style>
