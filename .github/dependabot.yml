@@ -1,0 +1,64 @@
+# Actualizaciones automaticas de dependencias (#102). Cada lunes Dependabot
+# revisa los tres ecosistemas y abre PRs; el CI corre en cada uno. Quien los
+# revisa y como se mergean esta en el CONTRIBUTING ("PRs de Dependabot").
+version: 2
+
+updates:
+  # Backend (pom.xml)
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Mexico_City
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - dependencies
+    # Las versiones menores y de parche llegan juntas en un solo PR. Las
+    # mayores llegan cada una en su propio PR, porque pueden romper cosas.
+    groups:
+      maven-menores-y-parches:
+        update-types:
+          - minor
+          - patch
+
+  # Interfaz (frontend/package.json)
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Mexico_City
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - dependencies
+    groups:
+      npm-menores-y-parches:
+        update-types:
+          - minor
+          - patch
+
+  # Acciones usadas en .github/workflows
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Mexico_City
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - dependencies
+    groups:
+      actions-menores-y-parches:
+        update-types:
+          - minor
+          - patch
