@@ -2,50 +2,57 @@
 
 ## Status
 
-Propuesta
+Aceptada (2026-11-23)
 
 ## Contexto
 
-Actualmente, el contrato OpenAPI ya tiene endpoints que utilizan tokens Bearer para consultar y modificar el perfil y los favoritos de los usuarios. Sin embargo, todavía falta implementar el inicio de sesión, el manejo de contraseñas y la creación y validación de los tokens.
+Actualmente, el contrato OpenAPI define endpoints protegidos con tokens Bearer para consultar y modificar el perfil y los favoritos de los usuarios, así como endpoints para administrar conciertos (`POST`, `PUT`, `DELETE /api/v1/conciertos`) y ejecutar la sincronización manual (`/api/v1/admin/sincronizar`).
 
-Antes de empezar a programar estas partes, necesitamos decidir cómo se van a autenticar los usuarios, dónde se guardarán los tokens y qué permisos tendrá cada tipo de usuario.
+Con la incorporación de conciertos importados de proveedores externos (como Ticketmaster), permitir que cualquier usuario autenticado edite o elimine conciertos o dispare sincronizaciones representa un riesgo para la integridad del catálogo.
 
-También tenemos que tomar en cuenta la seguridad de las contraseñas y los tokens, proteger los endpoints y asegurarnos de que todo funcione con la API que ya tenemos.
+Necesitamos definir cómo se autentican los usuarios, qué roles existen, cómo viajan los roles en el JWT y cómo responde la API cuando falta sesión o permisos.
 
 ## Decisión
 
-Se propone que los usuarios puedan iniciar sesión con su correo electrónico y contraseña, y que utilicemos tokens JWT para comprobar su identidad al hacer solicitudes a la API.
+Los usuarios inician sesión con su correo electrónico y contraseña, y la API utiliza tokens JWT firmados (HMAC-SHA con `JJWT`) para comprobar su identidad y permisos en cada solicitud protegida.
 
-Las contraseñas se guardarán usando un algoritmo seguro como BCrypt, para que no se almacenen directamente como texto normal. El backend se encargará de comprobar las credenciales, generar los tokens y revisar que sean válidos y que no hayan expirado.
+Las contraseñas se guardan usando BCrypt (`PasswordEncoder`), nunca en texto plano. El backend comprueba las credenciales, genera el token JWT y valida su firma y vigencia en `JwtAuthenticationFilter`.
 
-Para el cliente SPA, se propone guardar el token de acceso en memoria, en lugar de utilizar `localStorage`. De esta forma, el token no se queda guardado de manera permanente en el navegador. Sin embargo, esto no elimina por completo los riesgos de seguridad, ya que un ataque XSS podría permitir que alguien accediera al token. Además, al recargar la página, el token se perderá.
+Para el cliente SPA, el token de acceso se mantiene en memoria en lugar de `localStorage` para evitar persistencia indefinida en el navegador (aunque no elimina por sí solo el riesgo de XSS y se pierde al recargar la página).
 
-También se propone tener dos roles:
+### Roles y permisos
 
-- `USER`: podrá consultar y modificar su propio perfil, así como agregar y eliminar sus conciertos favoritos.
-- `ADMIN`: tendrá los mismos permisos que un usuario normal y, además, podrá crear, editar y eliminar conciertos.
+La entidad `Usuario` incluye el campo `rol` (`RolUsuario` en formato `EnumType.STRING`, con valor por defecto `USUARIO`):
 
-El backend tendrá que revisar los permisos antes de permitir el acceso a cada endpoint protegido. No basta con ocultar botones u opciones en la interfaz, porque alguien todavía podría intentar hacer las solicitudes directamente.
+- `USUARIO` (rol por defecto en todo registro público): puede consultar y modificar su perfil y gestionar sus conciertos favoritos (`/api/v1/usuarios/**`). El endpoint de registro nunca acepta un rol desde el cliente.
+- `ADMIN`: tiene todos los permisos de `USUARIO` y además puede crear, editar y eliminar conciertos (`POST /api/v1/conciertos`, `PUT /api/v1/conciertos/**`, `DELETE /api/v1/conciertos/**`) y acceder a los endpoints de administración (`/api/v1/admin/**`, incluido `POST /api/v1/admin/sincronizar`).
 
-Por ahora, todo esto es una propuesta, así que el equipo tendrá que revisarla y ponerse de acuerdo antes de comenzar a implementarla.
+El rol se incluye en el claim `rol` del JWT al iniciar sesión (`JwtService`). En cada petición, `JwtAuthenticationFilter` lee ese claim (tratando tokens sin claim o con un valor desconocido como `USUARIO`) y construye la autoridad `ROLE_<ROL>` para Spring Security (`hasRole("ADMIN")`).
+
+### Respuestas de error de seguridad
+
+- **Rutas públicas:** registro, login, consultas `GET /api/v1/conciertos/**`, `GET /api/v1/artistas/**` y Swagger/OpenAPI.
+- **Sin token o token inválido (`401 Unauthorized`):** la petición se rechaza en `AuthenticationEntryPoint`.
+- **Con token válido pero sin rol `ADMIN` (`403 Forbidden`):** `ConfiguracionSeguridad` delega la `AccessDeniedException` al `HandlerExceptionResolver` para que `ManejadorGlobalDeExcepciones` responda `403 Forbidden` usando el formato común `ErrorRespuesta` (`status`, `error`, `mensaje`, `timestamp`).
+
+En el perfil `dev`, los datos de prueba (`UsuarioDatosDePruebaConfig`) asignan el rol `ADMIN` a uno de los usuarios de prueba (`flanconsalsa67@gmail.com`) y `USUARIO` al otro (`pollosasados99@gmail.com`) para facilitar la verificación manual de ambos flujos.
 
 ## Consecuencias
 
 **Pros:**
 
-- Los JWT permiten seguir utilizando la autenticación mediante Bearer tokens que ya aparece en el contrato de la API.
-- BCrypt ayuda a proteger las contraseñas, ya que no se guardan directamente.
-- Al tener nuestra propia autenticación, podemos controlar cómo funciona el inicio de sesión y cómo se verifican los usuarios.
-- Guardar el token en memoria evita que siga almacenado después de cerrar o recargar la página.
-- Los roles `USER` y `ADMIN` permiten separar las acciones normales de las que solo debería realizar un administrador.
+- Los JWT permiten seguir utilizando la autenticación mediante Bearer tokens que ya aparece en el contrato de la API y validar el rol sin consultar la base de datos en cada petición.
+- BCrypt protege las contraseñas en la base de datos.
+- Separar `USUARIO` y `ADMIN` protege el catálogo de conciertos y las tareas de sincronización contra modificaciones accidentales o no autorizadas.
+- Delegar el `403` a `ManejadorGlobalDeExcepciones` mantiene consistente el formato `ErrorRespuesta` en toda la API.
+- Los tokens emitidos antes de agregar roles se tratan de forma segura como `USUARIO`, nunca como `ADMIN`.
 
 **Contras:**
 
-- Nosotros tendremos que programar y mantener el sistema de autenticación y autorización.
-- Tendremos que decidir cuánto tiempo duran los tokens y cómo se renovará la sesión.
-- Si el usuario recarga la página, perderá el token y tendrá que iniciar sesión otra vez, a menos que implementemos una forma de renovar la sesión.
-- Si existe una vulnerabilidad XSS, el token podría quedar expuesto.
-- Tendremos que proteger bien las contraseñas, la clave que se utiliza para firmar los JWT y los endpoints que requieren autenticación.
+- Al vivir el rol dentro del JWT, un cambio de rol en la base de datos surte efecto hasta que el usuario vuelve a iniciar sesión o expira su token (24 horas por defecto).
+- Nosotros mantenemos el sistema de autenticación, expiración y autorización en el backend.
+- Si el usuario recarga la página en la SPA, pierde el token en memoria y debe iniciar sesión nuevamente mientras no exista renovación de sesión.
+- Es necesario proteger la clave `JWT_SECRET` mediante variables de entorno y no exponerla en el repositorio.
 
 ## Alternativas consideradas
 
@@ -53,71 +60,60 @@ Por ahora, todo esto es una propuesta, así que el equipo tendrá que revisarla 
 
 **Pros:**
 
-- Podemos controlar cómo funciona el inicio de sesión.
-- Es compatible con el contrato actual de la API.
-- No necesitamos depender de un servicio externo para autenticar a los usuarios.
+- Control total sobre el inicio de sesión, los claims del token y las reglas de autorización.
+- Compatible con el contrato OpenAPI actual.
+- Sin dependencia de terceros para autenticar usuarios.
 
 **Contras:**
 
-- Tenemos que encargarnos de manejar de forma segura las contraseñas, los tokens y las sesiones.
-- Si más adelante lo necesitamos, también tendremos que agregar funciones como la recuperación de contraseñas.
+- Requiere mantener el manejo seguro de contraseñas, tokens y futuras funciones como recuperación de contraseña.
 
-Se propone utilizar esta opción porque funciona con la API que ya tenemos y nos permite manejar la autenticación desde nuestro propio backend.
+Se eligió esta opción porque encaja con el contrato actual y mantiene la arquitectura simple y autocontenida.
 
 ### 2. Utilizar OAuth2 para iniciar sesión con Google
 
 **Pros:**
 
-- Google se encarga de comprobar las credenciales de sus usuarios.
-- No tenemos que manejar directamente las contraseñas de las cuentas de Google.
-- Puede hacer que iniciar sesión sea más sencillo para quienes ya tienen una cuenta de Google.
+- Delega la verificación de credenciales a Google.
 
 **Contras:**
 
-- Tenemos que registrar y configurar nuestra aplicación con Google.
-- Dependemos de un servicio externo.
-- Aunque usemos Google, el backend todavía tendrá que comprobar quién es el usuario y decidir cómo se autenticarán sus solicitudes a la API.
+- Añade registro externo, dependencia de un tercero y de todas formas requiere gestionar roles internos en el backend.
 
-Por ahora, se propone no utilizar esta opción, ya que implicaría hacer configuraciones e integraciones adicionales que podemos evitar en esta primera versión.
+Se descartó para esta versión para evitar complejidad innecesaria.
 
 ### 3. Guardar el token en `localStorage`
 
 **Pros:**
 
-- El token sigue disponible aunque se recargue la página.
-- Es sencillo obtenerlo desde JavaScript para enviarlo en las solicitudes a la API.
+- Persiste tras recargar la página.
 
 **Contras:**
 
-- Si existe una vulnerabilidad XSS, el token podría ser leído por código malicioso.
-- El token seguirá guardado hasta que se elimine o expire.
+- Un ataque XSS puede leer el token de forma persistente desde JavaScript.
 
-Se propone no utilizar esta opción porque el token quedaría almacenado de forma persistente y podría ser accesible desde JavaScript.
+Se descartó para limitar la exposición del token en el navegador.
 
 ### 4. Guardar el token en cookies `HttpOnly`
 
 **Pros:**
 
-- JavaScript no puede leer directamente las cookies que tienen la opción `HttpOnly`.
-- Las opciones `Secure` y `SameSite` ayudan a agregar otras medidas de seguridad.
+- No accesible directamente desde JavaScript y configurable con `Secure` y `SameSite`.
 
 **Contras:**
 
-- Tenemos que tomar medidas para evitar ataques CSRF.
-- Es necesario adaptar la configuración del frontend y del backend para trabajar con cookies.
+- Requiere protección adicional contra CSRF y adaptar el contrato actual basado en Bearer tokens.
 
-Por ahora, se propone no utilizar esta opción porque la API ya está planteada para utilizar Bearer tokens. De todas formas, podríamos considerarla más adelante si decidimos utilizar cookies para manejar las sesiones.
+Se descartó por ahora para mantener compatibilidad con el esquema `bearerAuth` del contrato OpenAPI.
 
 ### 5. No utilizar roles de usuario
 
 **Pros:**
 
-- La implementación inicial sería más sencilla.
-- Habría menos configuraciones para manejar los permisos.
+- Implementación inicial más sencilla.
 
 **Contras:**
 
-- No podríamos distinguir claramente entre usuarios normales y administradores.
-- Sería más complicado limitar las acciones de crear, editar y eliminar conciertos a las personas que tengan permiso para hacerlo.
+- Cualquier usuario autenticado podría modificar o borrar conciertos importados de proveedores externos y disparar sincronizaciones administrativas.
 
-Se propone utilizar los roles `USER` y `ADMIN` para que cada tipo de usuario tenga permisos diferentes y podamos controlar mejor quién puede realizar cada acción.
+Se descartó; se adoptan los roles `USUARIO` y `ADMIN` con validación en el backend.

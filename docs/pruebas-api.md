@@ -50,7 +50,12 @@ http://localhost:8080/swagger-ui/index.html
 
 ### Datos de prueba
 
-Al arrancar, la aplicación carga datos de prueba: 3 conciertos (Queen, Bad Bunny y Queen tribute band) y 2 usuarios. Por eso, en una base limpia los IDs `1`, `2` y `3` de conciertos y los IDs `1` y `2` de usuarios ya están ocupados: el primer usuario que registres tendrá el `id` `3`, no `1`.
+Al arrancar en el perfil `dev`, la aplicación carga datos de prueba: 3 conciertos (Queen, Bad Bunny y Queen tribute band) y 2 usuarios (ambos con contraseña `password123`):
+
+- **Administrador (`ADMIN`):** `flanconsalsa67@gmail.com` (`Marilu Putowsky`) — puede crear, editar y eliminar conciertos y ejecutar `POST /api/v1/admin/sincronizar`.
+- **Usuario estándar (`USUARIO`):** `pollosasados99@gmail.com` (`Eduardo Jimenez`) — puede usar perfil y favoritos, pero recibe `403 Forbidden` en rutas de administración.
+
+Por eso, en una base limpia los IDs `1`, `2` y `3` de conciertos y los IDs `1` y `2` de usuarios ya están ocupados: el primer usuario que registres tendrá el `id` `3`, no `1`.
 
 Estos datos solo se insertan si no existen (los conciertos, si la tabla está vacía; los usuarios, si su correo no está registrado), así que reiniciar la aplicación con la misma base no los duplica. Si quieres empezar desde cero con la base de Docker:
 
@@ -84,9 +89,11 @@ El flujo recomendado para comprobar las funciones principales de la API es:
 
 ## 3. Probar con curl
 
-### 3.1 Registrar un usuario
+### 3.1 Registrar un usuario e iniciar sesión (roles y JWT)
 
-Endpoint:
+Todo usuario registrado públicamente recibe el rol `USUARIO` por defecto (ver ADR-004).
+
+Endpoint de registro (público):
 
 ```text
 POST /api/v1/usuarios/registro
@@ -99,7 +106,8 @@ curl -X POST http://localhost:8080/api/v1/usuarios/registro \
   -H "Content-Type: application/json" \
   -d '{
     "nombre": "Usuario de Prueba",
-    "correo": "usuario.prueba@example.com"
+    "correo": "usuario.prueba@example.com",
+    "password": "password123"
   }'
 ```
 
@@ -109,7 +117,7 @@ Respuesta esperada:
 201 Created
 ```
 
-La respuesta contiene los datos del usuario creado y su `id`.
+La respuesta contiene los datos del usuario creado, su `id` y su `rol` (`USUARIO`).
 
 Ejemplo:
 
@@ -118,9 +126,26 @@ Ejemplo:
   "id": 3,
   "nombre": "Usuario de Prueba",
   "correo": "usuario.prueba@example.com",
+  "rol": "USUARIO",
   "favoritos": []
 }
 ```
+
+Para obtener un token JWT de usuario normal (`TOKEN_USUARIO`) o de administrador (`TOKEN_ADMIN`), usa `POST /api/v1/usuarios/login`:
+
+```bash
+# Token de usuario estándar (rol USUARIO)
+curl -X POST http://localhost:8080/api/v1/usuarios/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo": "usuario.prueba@example.com", "password": "password123"}'
+
+# Token de administrador de prueba en perfil dev (rol ADMIN)
+curl -X POST http://localhost:8080/api/v1/usuarios/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo": "flanconsalsa67@gmail.com", "password": "password123"}'
+```
+
+> Envía `-H "Authorization: Bearer TU_TOKEN"` en todas las rutas protegidas de `/usuarios/**`, y un token con rol `ADMIN` en `POST/PUT/DELETE /conciertos` y `POST /admin/sincronizar`.
 
 Guarda el `id` obtenido porque se utilizará para las pruebas de favoritos y de los endpoints por ID. El valor real depende de tu base de datos (ver "Datos de prueba").
 
@@ -413,9 +438,9 @@ Si el usuario no existe:
 
 ---
 
-### 3.9 Crear un concierto
+### 3.9 Crear un concierto (solo `ADMIN`)
 
-Endpoint:
+Endpoint (requiere token JWT con rol `ADMIN`):
 
 ```text
 POST /api/v1/conciertos
@@ -426,6 +451,7 @@ Comando:
 ```bash
 curl -X POST http://localhost:8080/api/v1/conciertos \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN_ADMIN" \
   -d '{
     "artista": "Artista de Prueba",
     "fecha": "2027-03-15",
@@ -498,9 +524,9 @@ Si el concierto no existe:
 
 ---
 
-### 3.11 Actualizar un concierto
+### 3.11 Actualizar un concierto (solo `ADMIN`)
 
-Endpoint:
+Endpoint (requiere token JWT con rol `ADMIN`):
 
 ```text
 PUT /api/v1/conciertos/{id}
@@ -511,6 +537,7 @@ Comando:
 ```bash
 curl -X PUT http://localhost:8080/api/v1/conciertos/4 \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN_ADMIN" \
   -d '{
     "artista": "Artista de Prueba (editado)",
     "fecha": "2027-03-16",
@@ -541,9 +568,9 @@ Si el concierto no existe:
 
 ---
 
-### 3.12 Eliminar un concierto
+### 3.12 Eliminar un concierto (solo `ADMIN`)
 
-Endpoint:
+Endpoint (requiere token JWT con rol `ADMIN`):
 
 ```text
 DELETE /api/v1/conciertos/{id}
@@ -552,7 +579,8 @@ DELETE /api/v1/conciertos/{id}
 Comando:
 
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/conciertos/4
+curl -X DELETE http://localhost:8080/api/v1/conciertos/4 \
+  -H "Authorization: Bearer TOKEN_ADMIN"
 ```
 
 Reemplaza `4` por el ID del concierto que se desea eliminar.
@@ -749,10 +777,37 @@ Respuesta esperada: `400 Bad Request`.
 ### 4.6 Falta un parámetro obligatorio (400)
 
 ```bash
-curl -i http://localhost:8080/api/v1/usuarios/perfil
+curl -i http://localhost:8080/api/v1/usuarios/perfil \
+  -H "Authorization: Bearer TOKEN_USUARIO"
 ```
 
 Respuesta esperada: `400 Bad Request`, porque falta el parámetro `correo`.
+
+### 4.7 Sin token en ruta protegida o administrativa (401)
+
+```bash
+curl -i -X POST http://localhost:8080/api/v1/conciertos \
+  -H "Content-Type: application/json" \
+  -d '{"artista": "Queen", "fecha": "2027-02-20", "ciudad": "CDMX", "lugar": "Auditorio Nacional"}'
+
+curl -i -X POST http://localhost:8080/api/v1/admin/sincronizar
+```
+
+Respuesta esperada en ambos: `401 Unauthorized`.
+
+### 4.8 Token válido sin rol `ADMIN` (403)
+
+```bash
+curl -i -X POST http://localhost:8080/api/v1/conciertos \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN_USUARIO" \
+  -d '{"artista": "Queen", "fecha": "2027-02-20", "ciudad": "CDMX", "lugar": "Auditorio Nacional"}'
+
+curl -i -X POST http://localhost:8080/api/v1/admin/sincronizar \
+  -H "Authorization: Bearer TOKEN_USUARIO"
+```
+
+Respuesta esperada en ambos: `403 Forbidden` con el formato `ErrorRespuesta` (`"status": 403`, `"error": "Forbidden"`, `"mensaje": "No tienes permisos para realizar esta acción"`).
 
 ---
 
@@ -790,29 +845,27 @@ También utiliza las variables:
 {{usuarioId}}
 {{conciertoId}}
 {{correo}}
+{{token}}
+{{adminToken}}
 ```
 
-Estas tres variables se llenan solas cuando la colección se ejecuta en orden: **Registrar usuario** genera un correo único y guarda el `correo` y el `usuarioId` que devuelve la API, y **Crear concierto** guarda el `conciertoId` del concierto creado. Además, cada solicitud verifica el código de respuesta esperado (pestaña **Test Results**).
+Estas variables se llenan solas cuando la colección se ejecuta en orden: **Iniciar sesión (Admin)** guarda `adminToken` (con el usuario `ADMIN` de `dev`), **Registrar usuario** e **Iniciar sesión (Usuario)** guardan `correo`, `usuarioId` y `token`, y **Crear concierto** guarda `conciertoId`. Además, cada solicitud verifica el código de respuesta esperado (incluyendo el caso `403 Forbidden` al crear un concierto con rol `USUARIO`).
 
 ### Flujo recomendado
 
 Ejecutar las solicitudes en este orden, una por una o con **Run collection**:
 
-1. **Conciertos → Listar conciertos**
-2. **Conciertos → Buscar conciertos por artista**
-3. **Conciertos → Buscar conciertos por ciudad**
-4. **Conciertos → Crear concierto**
-5. **Conciertos → Consultar concierto por ID**
-6. **Conciertos → Actualizar concierto**
-7. **Usuarios → Registrar usuario**
-8. **Usuarios → Consultar perfil**
-9. **Usuarios → Agregar favorito**
-10. **Usuarios → Obtener favoritos del usuario**
-11. **Usuarios → Quitar favorito**
-12. **Usuarios → Obtener usuario por ID**
-13. **Usuarios → Actualizar usuario**
-14. **Usuarios → Eliminar usuario**
-15. **Limpieza → Eliminar concierto**
+1. **Autenticación → Iniciar sesión (Admin)**
+2. **Conciertos → Listar conciertos** / búsquedas
+3. **Conciertos → Crear concierto (ADMIN)**
+4. **Conciertos → Consultar concierto por ID**
+5. **Conciertos → Actualizar concierto (ADMIN)**
+6. **Usuarios → Registrar usuario**
+7. **Usuarios → Iniciar sesión (Usuario)**
+8. **Usuarios → Crear concierto sin rol ADMIN (403)**
+9. **Usuarios → Consultar perfil / Favoritos / Actualizar y eliminar usuario**
+10. **Administración → Sincronizar conciertos (ADMIN)**
+11. **Limpieza → Eliminar concierto (ADMIN)**
 
 Si ejecutas una solicitud suelta sin haber corrido antes **Registrar usuario** o **Crear concierto**, `usuarioId` y `conciertoId` conservan su valor inicial (`1`), que corresponde a los datos de prueba. Ten cuidado con **Actualizar usuario** y **Eliminar usuario**, porque modificarían o borrarían al primer usuario de prueba.
 
@@ -888,26 +941,36 @@ Para las solicitudes que utilizan IDs en la URL, reemplazar los valores de ejemp
 
 | Endpoint                                 | Método | Éxito            | Posibles errores                                   |
 | ---------------------------------------- | ------ | ---------------- | -------------------------------------------------- |
-| `/usuarios/registro`                     | POST   | `201 Created`    | `400 Bad Request`, `409 Conflict`                  |
-| `/usuarios/perfil`                       | GET    | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
-| `/usuarios/favoritos`                    | POST   | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
-| `/usuarios/{id}`                         | GET    | `200 OK`         | `404 Not Found`                                    |
-| `/usuarios/{id}`                         | PUT    | `200 OK`         | `400 Bad Request`, `404 Not Found`, `409 Conflict` |
-| `/usuarios/{id}`                         | DELETE | `204 No Content` | `404 Not Found`                                    |
-| `/usuarios/{id}/favoritos`               | GET    | `200 OK`         | `404 Not Found`                                    |
-| `/usuarios/{id}/favoritos/{conciertoId}` | DELETE | `204 No Content` | `404 Not Found`                                    |
-| `/conciertos`                            | GET    | `200 OK`         | `400 Bad Request`                                  |
-| `/conciertos`                            | POST   | `201 Created`    | `400 Bad Request`                                  |
-| `/conciertos/{id}`                       | GET    | `200 OK`         | `404 Not Found`                                    |
-| `/conciertos/{id}`                       | PUT    | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
-| `/conciertos/{id}`                       | DELETE | `204 No Content` | `404 Not Found`                                    |
-| `/artistas/{nombre}/soundcloud`          | GET    | `200 OK`         | `400 Bad Request`, `404 Not Found`                 |
+| `/usuarios/registro`                     | POST   | `201 Created`    | `400 Bad Request`, `409 Conflict`                                      |
+| `/usuarios/login`                        | POST   | `200 OK`         | `400 Bad Request`, `401 Unauthorized`                                  |
+| `/usuarios/perfil`                       | GET    | `200 OK`         | `400 Bad Request`, `401 Unauthorized`, `404 Not Found`                 |
+| `/usuarios/favoritos`                    | POST   | `200 OK`         | `400 Bad Request`, `401 Unauthorized`, `404 Not Found`                 |
+| `/usuarios/{id}`                         | GET    | `200 OK`         | `401 Unauthorized`, `404 Not Found`                                    |
+| `/usuarios/{id}`                         | PUT    | `200 OK`         | `400 Bad Request`, `401 Unauthorized`, `404 Not Found`, `409 Conflict` |
+| `/usuarios/{id}`                         | DELETE | `204 No Content` | `401 Unauthorized`, `404 Not Found`                                    |
+| `/usuarios/{id}/favoritos`               | GET    | `200 OK`         | `401 Unauthorized`, `404 Not Found`                                    |
+| `/usuarios/{id}/favoritos/{conciertoId}` | DELETE | `204 No Content` | `401 Unauthorized`, `404 Not Found`                                    |
+| `/conciertos`                            | GET    | `200 OK`         | `400 Bad Request`                                                      |
+| `/conciertos`                            | POST   | `201 Created`    | `400 Bad Request`, `401 Unauthorized`, `403 Forbidden` (solo `ADMIN`)  |
+| `/conciertos/{id}`                       | GET    | `200 OK`         | `404 Not Found`                                                        |
+| `/conciertos/{id}`                       | PUT    | `200 OK`         | `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`|
+| `/conciertos/{id}`                       | DELETE | `204 No Content` | `401 Unauthorized`, `403 Forbidden`, `404 Not Found` (solo `ADMIN`)    |
+| `/admin/sincronizar`                     | POST   | `200 OK`         | `401 Unauthorized`, `403 Forbidden` (solo `ADMIN`, perfil `dev`)       |
+| `/artistas/{nombre}/soundcloud`          | GET    | `200 OK`         | `400 Bad Request`, `404 Not Found`                                     |
 
 ### Descripción de los errores
 
 **400 Bad Request**
 
 La petición contiene datos faltantes, un formato incorrecto, un campo que no pertenece al contrato, JSON inválido o le falta un parámetro obligatorio (por ejemplo, `correo` en `/usuarios/perfil`).
+
+**401 Unauthorized**
+
+No se envió un token JWT válido en la cabecera `Authorization: Bearer <token>`, el token expiró o las credenciales de login son incorrectas.
+
+**403 Forbidden**
+
+El usuario tiene una sesión válida (rol `USUARIO`), pero intentó ejecutar una acción reservada a administradores (`POST/PUT/DELETE /conciertos` o `/admin/**`). Devuelve el formato común `ErrorRespuesta`.
 
 **404 Not Found**
 

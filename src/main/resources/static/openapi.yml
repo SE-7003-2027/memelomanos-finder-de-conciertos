@@ -65,6 +65,7 @@ paths:
 
     post:
       summary: Crear un concierto
+      description: Crea un nuevo concierto en el catálogo. Requiere rol `ADMIN`.
       security:
         - bearerAuth: []
       tags:
@@ -86,6 +87,8 @@ paths:
           $ref: '#/components/responses/PeticionInvalida'
         '401':
           $ref: '#/components/responses/NoAutorizado'
+        '403':
+          $ref: '#/components/responses/Prohibido'
 
   /conciertos/{id}:
     parameters:
@@ -113,7 +116,7 @@ paths:
 
     put:
       summary: Actualizar un concierto por ID
-      description: Reemplaza todos los datos editables del concierto.
+      description: Reemplaza todos los datos editables del concierto. Requiere rol `ADMIN`.
       security:
         - bearerAuth: []
       tags:
@@ -135,6 +138,8 @@ paths:
           $ref: '#/components/responses/PeticionInvalida'
         '401':
           $ref: '#/components/responses/NoAutorizado'
+        '403':
+          $ref: '#/components/responses/Prohibido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -144,6 +149,7 @@ paths:
         Quita el concierto de los favoritos de todos los usuarios
         que lo tengan guardado y luego lo elimina.
         Las dos operaciones se realizan en una misma transaccion.
+        Requiere rol `ADMIN`.
       security:
         - bearerAuth: []
       tags:
@@ -153,6 +159,8 @@ paths:
           description: Concierto eliminado exitosamente. Sin contenido.
         '401':
           $ref: '#/components/responses/NoAutorizado'
+        '403':
+          $ref: '#/components/responses/Prohibido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
 
@@ -278,10 +286,9 @@ paths:
     post:
       summary: Sincronizar conciertos de Ticketmaster
       description: >
-        Ejecuta la sincronización manual. Disponible solo en el perfil dev.
-        Actualmente admite cualquier usuario con JWT válido, sin comprobar un rol
-        de administrador. Si falla una página de Ticketmaster, guarda los eventos
-        recibidos antes del fallo.
+        Ejecuta la sincronización manual. Disponible solo en el perfil dev y
+        restringida a usuarios con rol `ADMIN`. Si falla una página de Ticketmaster,
+        guarda los eventos recibidos antes del fallo.
       operationId: sincronizarConciertos
       tags:
         - Administración
@@ -303,6 +310,8 @@ paths:
                     description: Cantidad de eventos guardados o actualizados.
         '401':
           $ref: '#/components/responses/NoAutorizado'
+        '403':
+          $ref: '#/components/responses/Prohibido'
 
   # Usuarios
   /usuarios/registro:
@@ -745,6 +754,17 @@ components:
   responses:
     NoAutorizado:
       description: No autorizado. El usuario no ha iniciado sesión, no envió el token, o el token expiró.
+    Prohibido:
+      description: Acceso denegado. El usuario está autenticado pero no cuenta con el rol `ADMIN`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 403
+            error: Forbidden
+            mensaje: No tienes permisos para realizar esta acción
+            timestamp: "2026-11-23T12:00:00"
     PeticionInvalida:
       description: Faltan datos, tienen un formato invalido o el JSON esta mal formado.
       content:
@@ -901,6 +921,10 @@ components:
         correo:
           type: string
           description: Correo electrónico del usuario
+        rol:
+          type: string
+          enum: [USUARIO, ADMIN]
+          description: Rol del usuario (`USUARIO` por defecto, `ADMIN` para administrar conciertos y `/admin/**`)
         favoritos:
           type: array
           description: Lista de conciertos que el usuario ha marcado como favoritos

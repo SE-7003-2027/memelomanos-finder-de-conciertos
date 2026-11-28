@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "8d3f3f8e-6e0d-4a42-9e3c-39f8b2c1a701",
     "name": "Finder de Conciertos API",
-    "description": "Colección para probar los endpoints actuales de la API Finder de Conciertos. Ejecútala en orden (Run collection): las variables usuarioId, conciertoId y correo se llenan solas.",
+    "description": "Colección para probar los endpoints actuales de la API Finder de Conciertos, incluyendo autenticación JWT y roles (USUARIO y ADMIN). Ejecútala en orden (Run collection): las variables adminToken, token, usuarioId, conciertoId y correo se llenan solas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -21,9 +21,70 @@
     {
       "key": "correo",
       "value": "usuario.prueba@example.com"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
     }
   ],
   "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Iniciar sesión (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"flanconsalsa67@gmail.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Inicia sesión con el usuario ADMIN de los datos de prueba del perfil dev y guarda adminToken."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set(\"adminToken\", pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Conciertos",
       "item": [
@@ -126,120 +187,132 @@
             }
           ]
         },
-
-
-{
-  "name": "Buscar conciertos desde una fecha",
-  "request": {
-    "method": "GET",
-    "header": [],
-    "url": {
-      "raw": "{{baseUrl}}/conciertos?fechaDesde=2026-12-01",
-      "host": ["{{baseUrl}}"],
-      "path": ["conciertos"],
-      "query": [
         {
-          "key": "fechaDesde",
-          "value": "2026-12-01"
-        }
-      ]
-    }
-  },
-  "event": [
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "pm.test('Status code is 200', function () {",
-          "    pm.response.to.have.status(200);",
-          "});"
-        ]
-      }
-    }
-  ]
-},
-{
-  "name": "Buscar conciertos por artista y fecha hasta",
-  "request": {
-    "method": "GET",
-    "header": [],
-    "url": {
-      "raw": "{{baseUrl}}/conciertos?artista=queen&fechaHasta=2026-12-31",
-      "host": ["{{baseUrl}}"],
-      "path": ["conciertos"],
-      "query": [
-        {
-          "key": "artista",
-          "value": "queen"
+          "name": "Buscar conciertos desde una fecha",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conciertos?fechaDesde=2026-12-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conciertos"
+              ],
+              "query": [
+                {
+                  "key": "fechaDesde",
+                  "value": "2026-12-01"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "key": "fechaHasta",
-          "value": "2026-12-31"
-        }
-      ]
-    }
-  },
-  "event": [
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "pm.test('Status code is 200', function () {",
-          "    pm.response.to.have.status(200);",
-          "});"
-        ]
-      }
-    }
-  ]
-},
-{
-  "name": "Buscar conciertos con fecha inválida",
-  "request": {
-    "method": "GET",
-    "header": [],
-    "url": {
-      "raw": "{{baseUrl}}/conciertos?fechaDesde=2026-13-40",
-      "host": ["{{baseUrl}}"],
-      "path": ["conciertos"],
-      "query": [
+          "name": "Buscar conciertos por artista y fecha hasta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conciertos?artista=queen&fechaHasta=2026-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conciertos"
+              ],
+              "query": [
+                {
+                  "key": "artista",
+                  "value": "queen"
+                },
+                {
+                  "key": "fechaHasta",
+                  "value": "2026-12-31"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
         {
-          "key": "fechaDesde",
-          "value": "2026-13-40"
-        }
-      ]
-    }
-  },
-  "event": [
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "pm.test('Status code is 400', function () {",
-          "    pm.response.to.have.status(400);",
-          "});",
-          "pm.test('Error response has the common format', function () {",
-          "    const respuesta = pm.response.json();",
-          "    pm.expect(respuesta.status).to.eql(400);",
-          "    pm.expect(respuesta.mensaje).to.be.a('string');",
-          "});"
-        ]
-      }
-    }
-  ]
-},
-
-
+          "name": "Buscar conciertos con fecha inválida",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conciertos?fechaDesde=2026-13-40",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conciertos"
+              ],
+              "query": [
+                {
+                  "key": "fechaDesde",
+                  "value": "2026-13-40"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error response has the common format', function () {",
+                  "    const respuesta = pm.response.json();",
+                  "    pm.expect(respuesta.status).to.eql(400);",
+                  "    pm.expect(respuesta.mensaje).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
         {
-          "name": "Crear concierto",
+          "name": "Crear concierto (ADMIN)",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
               }
             ],
             "url": {
@@ -309,13 +382,17 @@
           ]
         },
         {
-          "name": "Actualizar concierto",
+          "name": "Actualizar concierto (ADMIN)",
           "request": {
             "method": "PUT",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
               }
             ],
             "url": {
@@ -369,7 +446,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Usuario de Prueba\",\n  \"correo\": \"{{correo}}\"\n}",
+              "raw": "{\n  \"nombre\": \"Usuario de Prueba\",\n  \"correo\": \"{{correo}}\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -414,10 +491,117 @@
           ]
         },
         {
+          "name": "Iniciar sesión (Usuario)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correo}}\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Inicia sesión con el usuario recién registrado (rol USUARIO) y guarda token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set(\"token\", pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear concierto sin rol ADMIN (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conciertos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conciertos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artista\": \"No Permitido\",\n  \"fecha\": \"2027-04-01\",\n  \"ciudad\": \"CDMX\",\n  \"lugar\": \"Foro Sol\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Verifica que un usuario autenticado con rol USUARIO recibe 403 Forbidden con el formato ErrorRespuesta."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test(\"Devuelve formato ErrorRespuesta\", function () {",
+                  "    const cuerpo = pm.response.json();",
+                  "    pm.expect(cuerpo.status).to.eql(403);",
+                  "    pm.expect(cuerpo.error).to.eql(\"Forbidden\");",
+                  "    pm.expect(cuerpo.mensaje).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Consultar perfil",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios/perfil?correo={{correo}}",
               "host": [
@@ -457,6 +641,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -497,7 +685,12 @@
           "name": "Obtener favoritos del usuario",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios/{{usuarioId}}/favoritos",
               "host": [
@@ -528,7 +721,12 @@
           "name": "Quitar favorito",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios/{{usuarioId}}/favoritos/{{conciertoId}}",
               "host": [
@@ -560,7 +758,12 @@
           "name": "Obtener usuario por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios/{{usuarioId}}",
               "host": [
@@ -594,11 +797,15 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Usuario Actualizado\",\n  \"correo\": \"actualizado.{{correo}}\"\n}",
+              "raw": "{\n  \"nombre\": \"Usuario Actualizado\",\n  \"correo\": \"actualizado.{{correo}}\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -634,7 +841,12 @@
           "name": "Eliminar usuario",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios/{{usuarioId}}",
               "host": [
@@ -708,13 +920,98 @@
       ]
     },
     {
+      "name": "Administración",
+      "item": [
+        {
+          "name": "Sincronizar conciertos sin rol ADMIN (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/sincronizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "sincronizar"
+              ]
+            },
+            "description": "Comprueba que /admin/sincronizar rechaza tokens sin rol ADMIN con 403 Forbidden."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sincronizar conciertos (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/sincronizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "sincronizar"
+              ]
+            },
+            "description": "Ejecuta la sincronización manual en perfil dev con rol ADMIN."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Devuelve cantidad de procesados\", function () {",
+                  "    pm.expect(pm.response.json().procesados).to.be.a(\"number\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Limpieza",
       "item": [
         {
-          "name": "Eliminar concierto",
+          "name": "Eliminar concierto (ADMIN)",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/conciertos/{{conciertoId}}",
               "host": [

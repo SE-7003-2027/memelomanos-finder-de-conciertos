@@ -1,5 +1,6 @@
 package com.memelomanos.finderconciertos.security;
 
+import com.memelomanos.finderconciertos.model.RolUsuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -15,6 +16,8 @@ import java.util.function.Function;
 public class JwtService {
 
     private static final String EXPIRACION_POR_DEFECTO_MS = "86400000";
+    private static final String CLAIM_USUARIO_ID = "usuarioId";
+    private static final String CLAIM_ROL = "rol";
 
     private final SecretKey secretKey;
     private final long expirationMs;
@@ -27,12 +30,18 @@ public class JwtService {
     }
 
     public String generarToken(String correo, Long usuarioId) {
+        return generarToken(correo, usuarioId, RolUsuario.USUARIO);
+    }
+
+    public String generarToken(String correo, Long usuarioId, RolUsuario rol) {
         Date ahora = new Date();
         Date expiracion = new Date(ahora.getTime() + expirationMs);
+        RolUsuario rolEfectivo = rol == null ? RolUsuario.USUARIO : rol;
 
         return Jwts.builder()
                 .subject(correo)
-                .claim("usuarioId", usuarioId)
+                .claim(CLAIM_USUARIO_ID, usuarioId)
+                .claim(CLAIM_ROL, rolEfectivo.name())
                 .issuedAt(ahora)
                 .expiration(expiracion)
                 .signWith(secretKey)
@@ -45,11 +54,24 @@ public class JwtService {
 
     public Long extraerUsuarioId(String token) {
         Claims claims = extraerTodosLosClaims(token);
-        Object id = claims.get("usuarioId");
+        Object id = claims.get(CLAIM_USUARIO_ID);
         if (id instanceof Number number) {
             return number.longValue();
         }
         return null;
+    }
+
+    public RolUsuario extraerRol(String token) {
+        Claims claims = extraerTodosLosClaims(token);
+        Object rol = claims.get(CLAIM_ROL);
+        if (rol instanceof String nombreRol && !nombreRol.isBlank()) {
+            try {
+                return RolUsuario.valueOf(nombreRol);
+            } catch (IllegalArgumentException ignored) {
+                return RolUsuario.USUARIO;
+            }
+        }
+        return RolUsuario.USUARIO;
     }
 
     public boolean esTokenValido(String token, String correo) {
