@@ -1,6 +1,8 @@
 package com.memelomanos.finderconciertos.integracion.ticketmaster;
 
 import com.memelomanos.finderconciertos.integracion.ConciertoExterno;
+import com.memelomanos.finderconciertos.integracion.CriteriosBusqueda;
+import com.memelomanos.finderconciertos.integracion.ProveedorConciertos;
 import com.memelomanos.finderconciertos.integracion.ticketmaster.dto.RespuestaTicketmaster.Evento;
 import com.memelomanos.finderconciertos.integracion.ticketmaster.dto.RespuestaTicketmaster.Fechas;
 import com.memelomanos.finderconciertos.integracion.ticketmaster.dto.RespuestaTicketmaster.Inicio;
@@ -19,7 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class TicketmasterProveedor {
+public class TicketmasterProveedor implements ProveedorConciertos {
 
     public static final String FUENTE = "TICKETMASTER";
     private static final Duration TIEMPO_CONEXION = Duration.ofSeconds(3);
@@ -40,6 +42,33 @@ public class TicketmasterProveedor {
 
     TicketmasterProveedor(TicketmasterCliente cliente) {
         this.cliente = cliente;
+    }
+
+    @Override
+    public List<ConciertoExterno> buscar(CriteriosBusqueda criterios) {
+        CriteriosBusqueda filtros = criterios == null ? CriteriosBusqueda.vacio() : criterios;
+        return buscar(
+                filtros.artista(),
+                filtros.ciudad(),
+                filtros.fechaDesde(),
+                filtros.fechaHasta()
+        );
+    }
+
+    @Override
+    public String nombre() {
+        return FUENTE;
+    }
+
+    @Override
+    public boolean estaHabilitado() {
+        return cliente != null;
+    }
+
+    @Override
+    public CatalogoProveedor descargarCatalogoCompleto() {
+        Catalogo catalogo = descargarCatalogo();
+        return new CatalogoProveedor(catalogo.eventos(), catalogo.cancelados(), catalogo.completo());
     }
 
     public List<ConciertoExterno> buscar(

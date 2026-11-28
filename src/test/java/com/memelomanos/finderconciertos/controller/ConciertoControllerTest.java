@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memelomanos.finderconciertos.integracion.superboletos.SuperboletosProveedor;
 import com.memelomanos.finderconciertos.integracion.viagogo.ViagogoProveedor;
 import com.memelomanos.finderconciertos.model.Concierto;
+import com.memelomanos.finderconciertos.model.OpcionCompra;
 import com.memelomanos.finderconciertos.security.ConfiguracionSeguridad;
 import com.memelomanos.finderconciertos.security.JwtService;
 import com.memelomanos.finderconciertos.service.ConciertoService;
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.time.LocalDate;
 
@@ -68,12 +70,25 @@ public class ConciertoControllerTest {
     }
 
     @Test
-    void buscarPorId_DebeRetornarOk() throws Exception {
+    void buscarPorId_DebeRetornarOkConOpcionesDeCompra() throws Exception {
+        conciertoMock.agregarOpcionCompra(new OpcionCompra(
+                "TICKETMASTER", "https://ticketmaster.example/coldplay", new BigDecimal("1200.00"), false
+        ));
+        conciertoMock.agregarOpcionCompra(new OpcionCompra(
+                "VIAGOGO", "https://viagogo.example/coldplay", new BigDecimal("1850.00"), true
+        ));
         when(conciertoService.buscarPorId(1L)).thenReturn(conciertoMock);
 
         mockMvc.perform(get("/api/v1/conciertos/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.artista").value("Coldplay"));
+                .andExpect(jsonPath("$.artista").value("Coldplay"))
+                .andExpect(jsonPath("$.opcionesCompra.length()").value(2))
+                .andExpect(jsonPath("$.opcionesCompra[0].fuente").value("TICKETMASTER"))
+                .andExpect(jsonPath("$.opcionesCompra[0].url").value("https://ticketmaster.example/coldplay"))
+                .andExpect(jsonPath("$.opcionesCompra[0].precioMinimo").value(1200.00))
+                .andExpect(jsonPath("$.opcionesCompra[0].esReventa").value(false))
+                .andExpect(jsonPath("$.opcionesCompra[1].fuente").value("VIAGOGO"))
+                .andExpect(jsonPath("$.opcionesCompra[1].esReventa").value(true));
     }
 
     @Test
