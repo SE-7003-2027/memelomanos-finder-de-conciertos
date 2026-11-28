@@ -48,6 +48,7 @@ el mismo PR.
 - **Base de datos:** PostgreSQL 16. Ver [ADR-003](docs/adr/003-eleccion-de-base-de-datos.md).
 - **Autenticación:** correo y contraseña con token JWT. Ver [ADR-004](docs/adr/004-estrategia-de-autenticacion.md).
 - **Música del artista:** SoundCloud (reproductor embebido). Ver [ADR-005](docs/adr/005-integracion-con-soundcloud.md).
+- **Catálogo de conciertos:** Ticketmaster. Ver [ADR-007](docs/adr/007-sincronizacion-de-conciertos.md).
 
 # Cómo ejecutar el proyecto desde cero
 
