@@ -141,6 +141,37 @@ try {
             </div>
           </dl>
 
+          <section
+            v-if="concierto.fuente || concierto.precioMinimo != null || concierto.urlCompra"
+            class="compra"
+            aria-label="Opciones de compra"
+          >
+            <h2>Entradas</h2>
+
+            <p v-if="concierto.fuente">
+              <strong>Proveedor:</strong> {{ concierto.fuente }}
+              <span
+                v-if="concierto.fuente.toUpperCase().includes('VIAGOGO')"
+                class="etiqueta-reventa"
+              >
+                Reventa
+              </span>
+            </p>
+
+            <p v-if="concierto.precioMinimo != null">
+              <strong>Precio desde:</strong> {{ concierto.precioMinimo }}
+            </p>
+
+            <a
+              v-if="concierto.urlCompra"
+              :href="concierto.urlCompra"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="boton-compra"
+            >
+              Comprar entradas
+            </a>
+          </section>
           <footer class="acciones">
             <BotonFavorito :concierto="concierto" />
             <a
@@ -181,6 +212,47 @@ try {
 </template>
 
 <style scoped>
+.compra {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.compra h2 {
+  font-size: 22px;
+}
+
+.compra p {
+  margin: 0;
+}
+
+.etiqueta-reventa {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--color-acento-suave);
+  color: var(--color-acento);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.boton-compra {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--color-acento);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: center;
+}
+
+.boton-compra:hover {
+  opacity: 0.9;
+}
+
 .boton-superboletos,
 .boton-viagogo {
   display: inline-block;

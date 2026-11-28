@@ -32,7 +32,9 @@ el mismo PR.
 | Lista de conciertos | Listo | Listo |
 | Detalle de un concierto | Listo | Listo |
 | Búsqueda de conciertos por artista y ciudad | Listo | Listo |
-| Búsqueda de conciertos por fecha | Listo | Pendiente |
+| Búsqueda de conciertos por fecha | Listo | Listo |
+| Imágenes de conciertos | Listo | Listo |
+| Opciones de compra de conciertos | Listo | Listo |
 | Alta, edición y baja de conciertos | Listo | — |
 | Registro, consulta, edición y baja de perfil | Listo | Listo |
 | Marcar y quitar conciertos favoritos | Listo | Listo |
