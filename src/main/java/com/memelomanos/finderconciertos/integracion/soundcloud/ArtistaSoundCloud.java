@@ -1,16 +1,19 @@
 package com.memelomanos.finderconciertos.integracion.soundcloud;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Lo que regresa GET /artistas/{nombre}/soundcloud (schema
  * "ArtistaSoundCloud" en openapi.yml). Solo lleva datos publicos del
  * artista: nada de tokens ni credenciales.
  *
- * @param fuente "api" si salio de la API con credenciales (Plan A) u
- *               "oembed" si salio del endpoint publico (Plan B)
+ * @param fuente "api" si salio de la API con credenciales u "oembed" si
+ *               salio del endpoint publico
+ * @param origen como se eligio el perfil (ver {@link Origen})
  */
 public record ArtistaSoundCloud(
         String artista,
@@ -18,7 +21,8 @@ public record ArtistaSoundCloud(
         String avatarUrl,
         String widgetUrl,
         List<PistaSoundCloud> pistas,
-        String fuente) {
+        String fuente,
+        Origen origen) {
 
     static final String WIDGET_URL = "https://w.soundcloud.com/player/";
 
@@ -29,5 +33,23 @@ public record ArtistaSoundCloud(
     }
 
     public record PistaSoundCloud(String titulo, String url, long duracionMs) {
+    }
+
+    /**
+     * De donde salio el perfil. La interfaz lo usa para ofrecer "¿No es
+     * este artista?" cuando la coincidencia no la confirmo una persona.
+     */
+    public enum Origen {
+        /** soundcloudUrl capturada a mano en un concierto. */
+        MANUAL,
+        /** Busqueda por nombre en la API con credenciales (Plan A). */
+        API,
+        /** URL deducida del nombre y confirmada con oEmbed (Plan C). */
+        AUTOMATICO;
+
+        @JsonValue
+        public String valor() {
+            return name().toLowerCase(Locale.ROOT);
+        }
     }
 }

@@ -79,7 +79,8 @@ class SoundCloudClienteTest {
         SoundCloudPropiedades propiedades = new SoundCloudPropiedades(
                 "id-de-prueba", "secreto-de-prueba",
                 "https://api.soundcloud.com", "https://secure.soundcloud.com",
-                "https://soundcloud.com/oembed", 2, Duration.ofHours(24), Duration.ofSeconds(5));
+                "https://soundcloud.com/oembed", 2, Duration.ofHours(24), Duration.ofHours(6),
+                Duration.ofSeconds(5));
         cliente = new SoundCloudCliente(builder.build(), propiedades, reloj);
     }
 
@@ -111,6 +112,7 @@ class SoundCloudClienteTest {
         assertThat(artista.widgetUrl())
                 .startsWith("https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fqueen");
         assertThat(artista.fuente()).isEqualTo("api");
+        assertThat(artista.origen()).isEqualTo(ArtistaSoundCloud.Origen.API);
         // maxPistas = 2: solo las dos con mas reproducciones, en orden.
         assertThat(artista.pistas()).extracting(ArtistaSoundCloud.PistaSoundCloud::titulo)
                 .containsExactly("La mas escuchada", "Segunda");
@@ -161,6 +163,45 @@ class SoundCloudClienteTest {
                 .andRespond(withSuccess("{\"collection\": []}", MediaType.APPLICATION_JSON));
 
         assertThat(cliente.buscarArtista("Nadie")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entre varios perfiles con el mismo nombre elige el de mas seguidores")
+    void buscarArtista_Homonimos_EligeElDeMasSeguidores() {
+        servidor.expect(requestTo(TOKEN_URL))
+                .andRespond(withSuccess(TOKEN, MediaType.APPLICATION_JSON));
+        servidor.expect(requestTo(startsWith(USUARIOS_URL)))
+                .andRespond(withSuccess("""
+                        {"collection": [
+                          {"urn": "soundcloud:users:3", "username": "Queen",
+                           "permalink_url": "https://soundcloud.com/queen-fan", "followers_count": 12},
+                          {"urn": "soundcloud:users:1", "username": "queen", "full_name": "Queen",
+                           "permalink_url": "https://soundcloud.com/queen", "followers_count": 90000}
+                        ]}
+                        """, MediaType.APPLICATION_JSON));
+        servidor.expect(requestTo(anyOf(startsWith(PISTAS_URL), startsWith(PISTAS_URL_CODIFICADA))))
+                .andRespond(withSuccess("{\"collection\": []}", MediaType.APPLICATION_JSON));
+
+        Optional<ArtistaSoundCloud> resultado = cliente.buscarArtista("Queen");
+
+        assertThat(resultado).map(ArtistaSoundCloud::perfilUrl).contains("https://soundcloud.com/queen");
+    }
+
+    @Test
+    @DisplayName("No acepta un resultado cuyo nombre no coincide con el del artista")
+    void buscarArtista_SinCoincidenciaExacta_RegresaVacio() {
+        servidor.expect(requestTo(TOKEN_URL))
+                .andRespond(withSuccess(TOKEN, MediaType.APPLICATION_JSON));
+        servidor.expect(requestTo(startsWith(USUARIOS_URL)))
+                .andRespond(withSuccess("""
+                        {"collection": [
+                          {"urn": "soundcloud:users:2", "username": "queen-tributo",
+                           "permalink_url": "https://soundcloud.com/queen-tributo", "followers_count": 500}
+                        ]}
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(cliente.buscarArtista("Queen")).isEmpty();
+        servidor.verify();
     }
 
     @Test

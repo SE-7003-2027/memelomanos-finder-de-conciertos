@@ -234,12 +234,15 @@ paths:
       summary: Obtener el perfil de SoundCloud de un artista
       description: >
         Devuelve el perfil del artista en SoundCloud y la URL del reproductor
-        embebible. Si el backend tiene credenciales de la API de SoundCloud
-        (Plan A de ADR-005) busca al artista por nombre y agrega sus pistas
-        más escuchadas (máximo 5). Si no, usa el endpoint público oEmbed con
-        la `soundcloudUrl` guardada en los conciertos de ese artista (Plan B)
-        y la lista de pistas viene vacía.
-        Las respuestas se guardan en caché por artista durante 24 horas.
+        embebible (ADR-005). Busca en este orden y lo indica en `origen`:
+        1) la `soundcloudUrl` guardada a mano en sus conciertos, con oEmbed
+        (`manual`); 2) la API de SoundCloud por nombre, si el backend tiene
+        credenciales, con sus pistas más escuchadas, máximo 5 (`api`);
+        3) hasta 4 URLs de perfil deducidas del nombre, con oEmbed, aceptando
+        solo un perfil cuyo nombre coincide con el del artista (`automatico`).
+        Con oEmbed la lista de pistas viene vacía.
+        Las respuestas se guardan en caché por artista: 24 horas si se
+        encontró el perfil y 6 horas si no.
         Las credenciales de SoundCloud nunca se incluyen en la respuesta.
       tags:
         - Artistas
@@ -878,8 +881,8 @@ components:
           type: string
           nullable: true
           description: >
-            Opcional. Perfil del artista en SoundCloud. Se usa para mostrar el
-            reproductor cuando no hay credenciales de la API (Plan B de ADR-005).
+            Opcional. Perfil del artista en SoundCloud. Si existe, el reproductor
+            lo usa antes que cualquier búsqueda automática (ADR-005).
           pattern: '^https://(www\.|m\.)?soundcloud\.com/\S+$'
       example:
         artista: Queen
@@ -951,7 +954,15 @@ components:
         fuente:
           type: string
           enum: [api, oembed]
-          description: De dónde salieron los datos (Plan A o Plan B de ADR-005)
+          description: De dónde salieron los datos (API con credenciales o endpoint público oEmbed)
+        origen:
+          type: string
+          enum: [manual, api, automatico]
+          description: >
+            Cómo se eligió el perfil. `manual` si es la `soundcloudUrl` capturada
+            en un concierto, `api` si salió de la búsqueda con credenciales y
+            `automatico` si se dedujo del nombre (Plan C). Con `automatico` la
+            interfaz ofrece buscar al artista en SoundCloud por si no es el correcto.
       example:
         artista: Queen
         perfilUrl: https://soundcloud.com/ejemplo-artista
@@ -962,6 +973,7 @@ components:
             url: https://soundcloud.com/ejemplo-artista/ejemplo-de-pista
             duracionMs: 354000
         fuente: api
+        origen: api
 
     PistaSoundCloud:
       type: object

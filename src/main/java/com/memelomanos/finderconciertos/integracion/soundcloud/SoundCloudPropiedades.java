@@ -7,7 +7,10 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * Configuracion de SoundCloud (seccion "soundcloud" de application.yml).
  * El client id y el secret salen de variables de entorno y pueden
- * quedar vacios: en ese caso solo se usa el Plan B (oEmbed) de ADR-005.
+ * quedar vacios: en ese caso no se usa el Plan A de ADR-005, solo oEmbed.
+ *
+ * @param duracionCacheNoEncontrados cuanto se recuerda que un artista no
+ *        tiene perfil, para no repetir las consultas en cada visita
  */
 @ConfigurationProperties(prefix = "soundcloud")
 public record SoundCloudPropiedades(
@@ -18,6 +21,7 @@ public record SoundCloudPropiedades(
         @DefaultValue("https://soundcloud.com/oembed") String oembedUrl,
         @DefaultValue("5") int maxPistas,
         @DefaultValue("24h") Duration duracionCache,
+        @DefaultValue("6h") Duration duracionCacheNoEncontrados,
         @DefaultValue("5s") Duration timeout) {
 
     public boolean tieneCredenciales() {
