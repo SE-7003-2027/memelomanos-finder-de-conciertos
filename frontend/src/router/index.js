@@ -29,6 +29,11 @@ const router = createRouter({
       name: 'perfil',
       component: () => import('../views/PerfilView.vue'),
     },
+    {
+  path: '/:pathMatch(.*)*',
+  name: 'no-encontrado',
+  component: () => import('../views/NoEncontradoView.vue'),
+  },
   ],
 })
 
